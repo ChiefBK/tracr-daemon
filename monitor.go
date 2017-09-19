@@ -3,59 +3,66 @@ package goku_bot
 import (
 	"poloniex-go-api"
 	"time"
+	. "goku-bot/global"
+	"log"
+	"sync"
 )
 
-const (
-	ETH_BTC_PAIR = "BTC_ETH"
-
-	FIVE_MIN_PERIOD    = 300
-	FIFTEEN_MIN_PERIOD = 900
-	THIRTY_MIN_PERIOD  = 1800
-	TWO_HOUR_PERIOD    = 7200
-	FOUR_HOUR_PERIOD   = 14400
-	ONE_DAY_PERIOD     = 86400 // number of seconds in one day
-)
-
-var poloniexCandlestickPeriods = map[int]string{
-	FIVE_MIN_PERIOD: "5_minutes",
-	FIFTEEN_MIN_PERIOD: "15_minutes",
-	THIRTY_MIN_PERIOD: "30_minutes",
-	TWO_HOUR_PERIOD: "2_hours",
-	FOUR_HOUR_PERIOD: "4_hours",
-	ONE_DAY_PERIOD: "1_day",
-}
+//TODO - Abstract 'Poloniex' to a list of 'Exchanges'
 
 type Monitor struct {
 	Poloniex *poloniex_go_api.Poloniex
 	Store    *Store
 }
 
-// TODO - return error to main go-routine if error
-func (m *Monitor) SyncOHLC(err chan error) {
-	defer close(err)
+func (m *Monitor) SyncOhlc(group *sync.WaitGroup) {
+	syncOhlcErrorsCh := make(chan error)
+	defer close(syncOhlcErrorsCh)
 
+	go func() {
+		for {
+			select {
+			case err := <-syncOhlcErrorsCh:
+				if err != nil {
+					log.Println("There was an error syncing Poloniex candles")
+					log.Println(err)
+				}
+			}
+
+		}
+	}()
+
+	numWorkers := len(POLONIEX_PAIRS) * len(POLONIEX_OHLC_INTERVALS)
+
+	log.Printf("There are %d workers", numWorkers)
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+
+	for _, pair := range POLONIEX_PAIRS {
+		for k, _ := range POLONIEX_OHLC_INTERVALS {
+			log.Printf("pair: %s, interval: %d", pair, k)
+			go m.SyncOhlcPoloniex(pair, k, syncOhlcErrorsCh, &wg)
+		}
+	}
+
+	wg.Wait()
+
+	log.Println("Finished Syncing OHLC")
+	group.Done()
+}
+
+func (m *Monitor) SyncOhlcPoloniex(pair string, interval int, err chan<- error, group *sync.WaitGroup) {
 	end := time.Now()
 	start := end.AddDate(0, 0, -1)
 
-	poloniexBtcEthFiveMin := make(chan *poloniex_go_api.ReturnChartDataResponse)
-	poloniexBtcEthFifteenMin := make(chan *poloniex_go_api.ReturnChartDataResponse)
+	resp := m.Poloniex.ReturnChartData(pair, interval, start, end)
 
-	go m.Poloniex.ReturnChartData(ETH_BTC_PAIR, FIVE_MIN_PERIOD, start, end, poloniexBtcEthFiveMin)
-	go m.Poloniex.ReturnChartData(ETH_BTC_PAIR, FIFTEEN_MIN_PERIOD, start, end, poloniexBtcEthFifteenMin)
-
-	poloniexBtcEthFiveMinResp := <-poloniexBtcEthFiveMin
-	poloniexBtcEthFifteenMinResp := <-poloniexBtcEthFifteenMin
-
-	if poloniexBtcEthFiveMinResp.Err != nil {
-		err <- poloniexBtcEthFiveMinResp.Err
-		return
+	if resp.Err != nil {
+		log.Println("error getting the chart data")
+		err <- resp.Err
 	}
 
-	if poloniexBtcEthFifteenMinResp.Err != nil {
-		err <- poloniexBtcEthFifteenMinResp.Err
-		return
-	}
+	m.Store.SyncCandles(resp.Response, "poloniex", pair, POLONIEX_OHLC_INTERVALS[interval])
 
-	m.Store.SyncCandles(poloniexBtcEthFiveMinResp.Response, "poloniex", ETH_BTC_PAIR, poloniexCandlestickPeriods[FIVE_MIN_PERIOD])
-	m.Store.SyncCandles(poloniexBtcEthFifteenMinResp.Response, "poloniex", ETH_BTC_PAIR, poloniexCandlestickPeriods[FIFTEEN_MIN_PERIOD])
+	group.Done()
 }

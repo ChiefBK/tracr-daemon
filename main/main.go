@@ -4,19 +4,18 @@ import (
 	"poloniex-go-api"
 	"time"
 	"goku-bot"
-	"gopkg.in/mgo.v2"
 	"log"
 	"flag"
 	"errors"
-	//"github.com/robfig/cron"
+
+	"sync"
+	"goku-bot/strategies"
+	. "goku-bot/global"
 )
 
 const (
-	API_KEY                  = "8650VFZA-2POLX348-D69ZFDTC-AKQ2NEFM"
-	API_SECRET               = "dc79063b5781e7926521fd1c9b87efa276189af5b298fb84574c777cf19816f45f42624e598f9d0add0297dee527f6294babf255cead7dec9b5df19f2f228562"
-	DB_URI                   = "localhost"
-	DB_NAME                  = "goku-bot"
-	NUMBER_MONITOR_PROCESSES = 3
+	API_KEY    = "8650VFZA-2POLX348-D69ZFDTC-AKQ2NEFM"
+	API_SECRET = "dc79063b5781e7926521fd1c9b87efa276189af5b298fb84574c777cf19816f45f42624e598f9d0add0297dee527f6294babf255cead7dec9b5df19f2f228562"
 )
 
 var (
@@ -52,24 +51,21 @@ func initialize() (err error) {
 
 	startDateTime = time.Now()
 
-	var dbErr error
-	session, dbErr := mgo.Dial(DB_URI)
-	if dbErr != nil {
-		err = errors.New("Could not connect to db")
+	store, err := goku_bot.NewStore()
+
+	if err != nil {
+		err = errors.New("error creating store")
 		return
 	}
 
-	db := session.DB(DB_NAME)
+	poloniex := poloniex_go_api.New(API_KEY, API_SECRET)
 
 	if *clean {
 		log.Println("Dropping DB")
-		err = db.DropDatabase()
+		err = store.Database.DropDatabase()
 	}
 
-	store := &goku_bot.Store{Database: db, Session: session}
-	polo := poloniex_go_api.New(API_KEY, API_SECRET)
-
-	monitor = &goku_bot.Monitor{polo, store}
+	monitor = &goku_bot.Monitor{poloniex, store}
 
 	return
 }
@@ -83,35 +79,29 @@ func runMonitor() {
 
 	lastMonitor = time.Now()
 
-	defer analyze()
+	var group sync.WaitGroup
+	group.Add(1)
 
-	//var wg sync.WaitGroup
-	//wg.Add(NUMBER_MONITOR_PROCESSES)
-	//
-	//go store.StoreBtcBalances(&wg)
-	//go store.StoreLoanOffers(&wg)
-	//go store.StoreActiveLoans(&wg)
+	go monitor.SyncOhlc(&group)
 
-	syncOHLCch := make(chan error)
-	go monitor.SyncOHLC(syncOHLCch)
-
-	syncOHLCRes := <-syncOHLCch
-
-	if syncOHLCRes != nil {
-		log.Println("Error syncing OHLC")
-	}
-	//wg.Wait()
+	group.Wait()
 
 	log.Println("Finished Monitor")
+
+	analyze()
 }
 
 func analyze() {
 	log.Println("Starting Analyze")
 
-}
+	bot1ActionQueueCh := make(chan goku_bot.ActionQueue)
+	bot1ErrorCh := make(chan error)
 
-//func poller(){
-//	done := make(chan bool)
-//
-//	monitor(done)
-//}
+	bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
+	go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
+
+	<- bot1ActionQueueCh
+	<- bot1ErrorCh
+
+	log.Println("Finished Analyze")
+}

@@ -2,12 +2,12 @@ package goku_bot
 
 import (
 	"gopkg.in/mgo.v2"
-	"time"
 	"poloniex-go-api"
 	"log"
 	"strings"
 	"gopkg.in/mgo.v2/bson"
-	"fmt"
+	"errors"
+	. "goku-bot/global"
 )
 
 type Store struct {
@@ -15,28 +15,31 @@ type Store struct {
 	Database *mgo.Database
 }
 
-type BtcBalanceStore struct {
-	Balance *poloniex_go_api.Balance
-	Created time.Time
-}
-
-type LoanOffersStore struct {
-	LoanOffers []*poloniex_go_api.Order
-	Created    time.Time
-}
-
-type ActiveLoansStore struct {
-	ActiveLoans []*poloniex_go_api.Loan
-	Created     time.Time
-}
-
-type OhlcPoloniexEthBtcFiveMinSchema struct {
+type OhlcSchema struct {
 	Candle *poloniex_go_api.Candle
+	Step   int
 }
 
 const (
 	OHLC_MAX_CANDLES = 200
 )
+
+func NewStore() (store *Store, err error) {
+	session, dbErr := mgo.Dial(DB_URI)
+	if dbErr != nil {
+		err = errors.New("could not connect to store")
+		return
+	}
+
+	db := session.DB(DB_NAME)
+
+	store = new(Store)
+
+	store.Session = session
+	store.Database = db
+
+	return
+}
 
 //type ChartOHLCSchema struct {
 //	//ExchangeOHLCSchema `bson:"exchange,inline"`
@@ -55,10 +58,9 @@ const (
 //	//Candles []*Poloniex_Go_Api.Candle
 //}
 
-// TODO - use Exchange abstraction to get info from multiple exchanges
-type Exchange struct {
-	Poloniex *poloniex_go_api.Poloniex
-}
+//type Exchange struct {
+//	Poloniex *poloniex_go_api.Poloniex
+//}
 
 //func (s *Store) StoreBtcBalances(wg *sync.WaitGroup) {
 //	balanceCh := make(chan *Poloniex_Go_Api.Balance)
@@ -90,43 +92,51 @@ type Exchange struct {
 //}
 
 func (s *Store) SyncCandles(candles []*poloniex_go_api.Candle, exchange, pair, interval string) {
-	log.Println("Syncing Candles")
-
-	if len(candles) == 0 {
+	if candles == nil {
 		return
 	}
 
 	collectionName := BuildCollectionName(exchange, pair, interval)
+	log.Printf("Syncing Candles for collection %s", collectionName)
 
 	startWindow := candles[0].Date
 
-	var dbCandles []*poloniex_go_api.Candle
-	s.Database.C(collectionName).Find(bson.M{"date": bson.M{"$gte": startWindow}}).All(&dbCandles)
+	index := mgo.Index{
+		Key:    []string{"-step"},
+		Unique: true,
+	}
+	s.Database.C(collectionName).EnsureIndex(index)
 
-	if len(dbCandles) == 0 {
-		fmt.Println("No existing candles in db. Storing all candles")
-		s.storeCandles(candles, collectionName)
+	var ohlc []*OhlcSchema
+	s.Database.C(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": startWindow}}).All(&ohlc)
+
+	if len(ohlc) == 0 {
+		log.Println("No existing candles in db. Storing all candles")
+		s.storeCandles(candles, collectionName, 0)
 		return
 	}
 
-	lastDbCandle := dbCandles[len(dbCandles)-1]
+	lastOhlc := ohlc[len(ohlc)-1]
 
 	var candlesToAdd []*poloniex_go_api.Candle
 
 	for i := range candles {
-		if candles[i].Date > lastDbCandle.Date {
+		if candles[i].Date > lastOhlc.Candle.Date {
 			candlesToAdd = append(candlesToAdd, candles[i])
 		}
 	}
 
-	s.storeCandles(candlesToAdd, collectionName)
+	s.storeCandles(candlesToAdd, collectionName, lastOhlc.Step+1)
 }
 
-func (s *Store) storeCandles(candles []*poloniex_go_api.Candle, collectionName string) {
+func (s *Store) storeCandles(candles []*poloniex_go_api.Candle, collectionName string, startingStep int) {
 	log.Printf("Storing %d candles", len(candles))
 
+	step := startingStep
 	for i := range candles {
-		s.Database.C(collectionName).Insert(candles[i])
+		ohlc := &OhlcSchema{Candle: candles[i], Step: step}
+		s.Database.C(collectionName).Insert(ohlc)
+		step++
 	}
 }
 
@@ -135,6 +145,6 @@ func (s *Store) trimCandles(collectionName string) {
 
 }
 
-func BuildCollectionName(exchange, pair, interval string) string{
+func BuildCollectionName(exchange, pair, interval string) string {
 	return strings.Join([]string{"OHLC", exchange, pair, interval}, "-")
 }
