@@ -39,8 +39,8 @@ type MacdValue struct {
 }
 
 type AroonValue struct {
-	Up   float64
-	Down float64
+	Up   *int
+	Down *int
 }
 
 type TimeSlice struct {

@@ -150,7 +150,6 @@ func CalculateExponentialMovingAverage(periods int, slices []*TimeSlice) {
 }
 
 func CalculateNextEma(current, last, multiplier float64) float64 {
-	//log.Printf("Calculating Next Ema - %f, %f, %f", current, last, multiplier)
 	return (current-last)*multiplier + last
 }
 
@@ -184,9 +183,6 @@ func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, 
 
 	var window []*TimeSlice
 	for _, slice := range slices {
-		//log.Println("THIS")
-		//log.Println(slice.Macd[macdParams])
-
 		macd := slice.Macd[macdParams]
 
 		if macd == nil {
@@ -235,4 +231,64 @@ func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*
 	log.Printf("Calculating MACD - %d, %d, %d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
 	CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
+}
+
+func CalculateAroon(periods int, slices []*TimeSlice) {
+	log.Printf("Calculating AROON - %d", periods)
+	p := strconv.Itoa(periods)
+
+	var window []*TimeSlice
+	for _, slice := range slices {
+		window = append(window, slice)
+
+		if len(window) < periods {
+			continue
+		}
+
+		if len(window) > periods {
+			window = window[1:]
+		}
+
+		high, low := DaysSinceLastHighLow(window)
+
+		up := int(((float64(periods) - float64(high)) / float64(periods)) * 100)
+		down := int(((float64(periods) - float64(low)) / float64(periods)) * 100)
+
+		slice.Aroon[p] = &AroonValue{
+			Up: &up,
+			Down: &down,
+		}
+	}
+}
+
+func DaysSinceLastHighLow(window []*TimeSlice) (high, low int){
+	high = 0
+	low = 0
+
+	var highest float64
+	var lowest float64
+
+	for i := range window {
+		index := len(window) - 1 - i
+		last := window[index]
+		candleClose := last.Candle.Close
+
+		if i == 0 {
+			highest = candleClose
+			lowest = candleClose
+			continue
+		}
+
+		if candleClose > highest {
+			highest = candleClose
+			high = index
+		}
+
+		if candleClose < lowest {
+			lowest = candleClose
+			low = index
+		}
+	}
+
+	return
 }

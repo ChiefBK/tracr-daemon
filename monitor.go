@@ -75,6 +75,7 @@ func (m *Monitor) CalculateIndicators(exchange, pair string, interval int) {
 
 	CalculateExponentialMovingAverage(10, allSlices)
 	CalculateMacd(12, 26, 9, allSlices)
+	CalculateAroon(25, allSlices)
 
 	for _, slice := range allSlices {
 		m.Store.Database.C(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
