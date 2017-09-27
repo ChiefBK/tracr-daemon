@@ -4,6 +4,8 @@ const (
 	DB_NAME = "goku-bot"
 	DB_URI  = "localhost"
 
+	EXCHANGE_POLONIEX = "poloniex"
+
 	// BTC Pairs
 	BTC_ETH_PAIR = "BTC_ETH" // Ethereum
 	BTC_LTC_PAIR = "BTC_LTC" // Litecoin
@@ -25,6 +27,8 @@ const (
 	TWO_HOUR_INTERVAL    = 7200
 	FOUR_HOUR_INTERVAL   = 14400
 	ONE_DAY_INTERVAL     = 86400 // number of seconds in one day
+
+	MACD = "macd"
 )
 
 //var POLONIEX_PAIRS = []string{BTC_ETH_PAIR}
@@ -33,14 +37,19 @@ const (
 //	FIVE_MIN_INTERVAL:    "5_minutes",
 //}
 
-var POLONIEX_PAIRS = []string{BTC_ETH_PAIR, BTC_LTC_PAIR, BTC_XMR_PAIR, BTC_XRP_PAIR, BTC_BCH_PAIR, USDT_BTC_PAIR,
-USDT_ETH_PAIR, USDT_LTC_PAIR, USDT_XMR_PAIR, USDT_BCH_PAIR, USDT_XRP_PAIR}
+//var POLONIEX_PAIRS = []string{BTC_ETH_PAIR, BTC_LTC_PAIR, BTC_XMR_PAIR, BTC_XRP_PAIR, BTC_BCH_PAIR, USDT_BTC_PAIR,
+//	USDT_ETH_PAIR, USDT_LTC_PAIR, USDT_XMR_PAIR, USDT_BCH_PAIR, USDT_XRP_PAIR}
+var POLONIEX_PAIRS = []string{USDT_BTC_PAIR}
 
 var POLONIEX_OHLC_INTERVALS = map[int]string{
 	FIVE_MIN_INTERVAL:    "5_minutes",
-	FIFTEEN_MIN_INTERVAL: "15_minutes",
-	THIRTY_MIN_INTERVAL:  "30_minutes",
-	TWO_HOUR_INTERVAL:    "2_hours",
-	FOUR_HOUR_INTERVAL:   "4_hours",
-	ONE_DAY_INTERVAL:     "1_day",
+	//FIFTEEN_MIN_INTERVAL: "15_minutes",
+	//THIRTY_MIN_INTERVAL:  "30_minutes",
+	//TWO_HOUR_INTERVAL:    "2_hours",
+	//FOUR_HOUR_INTERVAL:   "4_hours",
+	//ONE_DAY_INTERVAL:     "1_day",
+}
+
+var MACD_PARAMS = [][]int {
+	{12, 26, 9},
 }

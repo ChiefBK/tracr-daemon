@@ -11,14 +11,13 @@ import (
 	"sync"
 	"goku-bot/strategies"
 	. "goku-bot/global"
-)
-
-const (
-	API_KEY    = "8650VFZA-2POLX348-D69ZFDTC-AKQ2NEFM"
-	API_SECRET = "dc79063b5781e7926521fd1c9b87efa276189af5b298fb84574c777cf19816f45f42624e598f9d0add0297dee527f6294babf255cead7dec9b5df19f2f228562"
+	"os"
 )
 
 var (
+	API_KEY    = os.Getenv("POLONIEX_API_KEY")
+	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
+
 	startDateTime time.Time
 	firstMonitor  time.Time
 	lastMonitor   time.Time
@@ -82,17 +81,63 @@ func runMonitor() {
 	var group sync.WaitGroup
 	group.Add(1)
 
-	go monitor.SyncOhlc(&group)
+	go monitor.SyncMonitor(&group)
 
 	group.Wait()
 
 	log.Println("Finished Monitor")
 
-	analyze()
+	//runAnalyze()
 }
 
-func analyze() {
+//func calculateTechnicalIndicators() error {
+//	store, err := goku_bot.NewStore()
+//
+//	if err != nil {
+//		return errors.New("error creating store - can not calculate technical indicators")
+//	}
+//
+//	ohlc := store.RetrieveSlicesByQueue(EXCHANGE_POLONIEX, USDT_BTC_PAIR, FIVE_MIN_INTERVAL, -1, -1) // retrieve all candles
+//
+//	if len(ohlc) == 0 { // If table is empty or doesn't exist
+//
+//	}
+//
+//	candles := goku_bot.GetCandles(ohlc)
+//	dateValues := goku_bot.GetDateValues(candles)
+//	log.Println("DATE VALUES:")
+//	log.Println(dateValues)
+//	log.Println(len(dateValues))
+//
+//	sma := goku_bot.CalculateSimpleMovingAverage(3, dateValues)
+//	log.Println("SMA:")
+//	log.Println(sma)
+//	log.Println(len(sma))
+//
+//	ema := goku_bot.CalculateExponentialMovingAverage(3, dateValues)
+//	log.Println("EMA:")
+//	log.Println(ema)
+//	log.Println(len(ema))
+//
+//	macd := goku_bot.Macd(12, 26, 9, dateValues)
+//
+//	log.Println("MACD:")
+//	log.Println(macd)
+//	log.Println(len(macd))
+//
+//	return nil
+//}
+
+func runAnalyze() {
 	log.Println("Starting Analyze")
+
+	//err := calculateTechnicalIndicators()
+
+	//if err != nil {
+	//	log.Println("Error during Analyze - Aborting")
+	//	log.Println(err)
+	//	return
+	//}
 
 	bot1ActionQueueCh := make(chan goku_bot.ActionQueue)
 	bot1ErrorCh := make(chan error)
@@ -100,8 +145,8 @@ func analyze() {
 	bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
 	go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
 
-	<- bot1ActionQueueCh
-	<- bot1ErrorCh
+	<-bot1ActionQueueCh
+	<-bot1ErrorCh
 
 	log.Println("Finished Analyze")
 }

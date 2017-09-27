@@ -6,6 +6,7 @@ import (
 	. "goku-bot/global"
 	"log"
 	"sync"
+	"gopkg.in/mgo.v2/bson"
 )
 
 //TODO - Abstract 'Poloniex' to a list of 'Exchanges'
@@ -15,7 +16,7 @@ type Monitor struct {
 	Store    *Store
 }
 
-func (m *Monitor) SyncOhlc(group *sync.WaitGroup) {
+func (m *Monitor) SyncMonitor(group *sync.WaitGroup) {
 	syncOhlcErrorsCh := make(chan error)
 	defer close(syncOhlcErrorsCh)
 
@@ -41,7 +42,7 @@ func (m *Monitor) SyncOhlc(group *sync.WaitGroup) {
 	for _, pair := range POLONIEX_PAIRS {
 		for k, _ := range POLONIEX_OHLC_INTERVALS {
 			log.Printf("pair: %s, interval: %d", pair, k)
-			go m.SyncOhlcPoloniex(pair, k, syncOhlcErrorsCh, &wg)
+			go m.BuildMonitorPoloniex(pair, k, syncOhlcErrorsCh, &wg)
 		}
 	}
 
@@ -51,7 +52,7 @@ func (m *Monitor) SyncOhlc(group *sync.WaitGroup) {
 	group.Done()
 }
 
-func (m *Monitor) SyncOhlcPoloniex(pair string, interval int, err chan<- error, group *sync.WaitGroup) {
+func (m *Monitor) BuildMonitorPoloniex(pair string, interval int, err chan<- error, group *sync.WaitGroup) {
 	end := time.Now()
 	start := end.AddDate(0, 0, -1)
 
@@ -63,6 +64,19 @@ func (m *Monitor) SyncOhlcPoloniex(pair string, interval int, err chan<- error, 
 	}
 
 	m.Store.SyncCandles(resp.Response, "poloniex", pair, POLONIEX_OHLC_INTERVALS[interval])
+	m.CalculateIndicators("poloniex", pair, interval)
 
 	group.Done()
+}
+
+func (m *Monitor) CalculateIndicators(exchange, pair string, interval int) {
+	collectionName := BuildTimeSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
+	allSlices := m.Store.RetrieveSlicesByQueue(exchange, pair, interval, -1, -1)
+
+	CalculateExponentialMovingAverage(10, allSlices)
+	CalculateMacd(12, 26, 9, allSlices)
+
+	for _, slice := range allSlices {
+		m.Store.Database.C(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
+	}
 }
