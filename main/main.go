@@ -22,7 +22,7 @@ var (
 	firstMonitor  time.Time
 	lastMonitor   time.Time
 
-	monitor *goku_bot.Monitor
+	candlestickSteward *goku_bot.CandlestickSteward
 )
 
 func main() {
@@ -31,11 +31,35 @@ func main() {
 	if err != nil {
 		log.Println("Initialization Error")
 		log.Println(err)
+		return
 	}
 
 	log.Println("Initialization Complete")
 
-	runMonitor()
+	store, err := goku_bot.NewStore()
+
+	if err != nil {
+		log.Printf("Error connecting to store: %s", err)
+	}
+
+	orderBookSteward := &goku_bot.OrderBookSteward{
+		Store: store,
+		Exchange: "poloniex",
+		Pair: "USDT_BTC",
+	}
+
+	// TODO - create new order book steward for each pair
+	var orderBookConnections sync.WaitGroup
+	orderBookConnections.Add(1)
+	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC", &orderBookConnections)
+
+	orderBookConnections.Wait()
+	log.Printf("Done Waiting - orderbook stored")
+	log.Printf("Starting timer")
+	timer := time.NewTimer(time.Minute * 3)
+	<-timer.C
+
+	//runMonitor()
 
 	//log.Println("Starting Cron job")
 	//c := cron.New()
@@ -44,6 +68,7 @@ func main() {
 }
 
 func initialize() (err error) {
+	log.Println("Initializing...")
 	clean := flag.Bool("clean", false, "Clean DB on start")
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
@@ -51,6 +76,7 @@ func initialize() (err error) {
 	startDateTime = time.Now()
 
 	store, err := goku_bot.NewStore()
+	log.Println("Created store for candlestick steward")
 
 	if err != nil {
 		err = errors.New("error creating store")
@@ -58,13 +84,15 @@ func initialize() (err error) {
 	}
 
 	poloniex := poloniex_go_api.New(API_KEY, API_SECRET)
+	log.Println("Created Poloniex API interface for candlestick steward")
 
 	if *clean {
 		log.Println("Dropping DB")
-		err = store.Database.DropDatabase()
+		err = store.DropDatabase()
 	}
 
-	monitor = &goku_bot.Monitor{poloniex, store}
+	candlestickSteward = &goku_bot.CandlestickSteward{poloniex, store}
+	log.Println("Initialized candlestick steward")
 
 	return
 }
@@ -81,63 +109,17 @@ func runMonitor() {
 	var group sync.WaitGroup
 	group.Add(1)
 
-	go monitor.SyncMonitor(&group)
+	go candlestickSteward.SyncCandles(&group)
 
 	group.Wait()
 
 	log.Println("Finished Monitor")
 
-	//runAnalyze()
+	runAnalyze()
 }
-
-//func calculateTechnicalIndicators() error {
-//	store, err := goku_bot.NewStore()
-//
-//	if err != nil {
-//		return errors.New("error creating store - can not calculate technical indicators")
-//	}
-//
-//	ohlc := store.RetrieveSlicesByQueue(EXCHANGE_POLONIEX, USDT_BTC_PAIR, FIVE_MIN_INTERVAL, -1, -1) // retrieve all candles
-//
-//	if len(ohlc) == 0 { // If table is empty or doesn't exist
-//
-//	}
-//
-//	candles := goku_bot.GetCandles(ohlc)
-//	dateValues := goku_bot.GetDateValues(candles)
-//	log.Println("DATE VALUES:")
-//	log.Println(dateValues)
-//	log.Println(len(dateValues))
-//
-//	sma := goku_bot.CalculateSimpleMovingAverage(3, dateValues)
-//	log.Println("SMA:")
-//	log.Println(sma)
-//	log.Println(len(sma))
-//
-//	ema := goku_bot.CalculateExponentialMovingAverage(3, dateValues)
-//	log.Println("EMA:")
-//	log.Println(ema)
-//	log.Println(len(ema))
-//
-//	macd := goku_bot.Macd(12, 26, 9, dateValues)
-//
-//	log.Println("MACD:")
-//	log.Println(macd)
-//	log.Println(len(macd))
-//
-//	return nil
-//}
 
 func runAnalyze() {
 	log.Println("Starting Analyze")
-
-	//err := calculateTechnicalIndicators()
-
-	//if err != nil {
-	//	log.Println("Error during Analyze - Aborting")
-	//	log.Println(err)
-	//	return
-	//}
 
 	bot1ActionQueueCh := make(chan goku_bot.ActionQueue)
 	bot1ErrorCh := make(chan error)

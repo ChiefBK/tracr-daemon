@@ -38,42 +38,6 @@ func (aq *ActionQueue) pop() *Action {
 	return action
 }
 
-type Bot struct {
-	Name     string
-	Exchange string
-	Pair     string
-	Strategy func(exchange, pair string, indicator *Indicator, store *Store) (actionQueue ActionQueue, err error)
-}
-
-func NewBot(name, exchange, pair string, strategy func(exchange, pair string, indicator *Indicator, store *Store) (actionQueue ActionQueue, err error)) (bot *Bot) {
-	bot = new(Bot)
-	bot.Strategy = strategy
-	bot.Exchange = exchange
-	bot.Pair = pair
-	bot.Name = name
-
-	return
-}
-
-func (b *Bot) RunStrategy(queueCh chan ActionQueue, errCh chan error) {
-	defer close(queueCh)
-	defer close(errCh)
-
-	store, err := NewStore()
-
-	if err != nil {
-		errCh <- err
-		return
-	}
-
-	indicator := NewIndicator()
-
-	queue, err := b.Strategy(b.Exchange, b.Pair, indicator, store)
-
-	queueCh <- queue
-	errCh <- err
-}
-
 type Indicator struct {
 	Store    *Store
 	Exchange string
@@ -102,10 +66,10 @@ func NewIndicator() (indicator *Indicator) {
 	return
 }
 
-func CalculateSimpleMovingAverage(periods int, slices []*TimeSlice) {
+func CalculateSimpleMovingAverage(periods int, slices []*CandleSlice) {
 	p := strconv.Itoa(periods)
 
-	var window []*TimeSlice
+	var window []*CandleSlice
 	for _, slice := range slices {
 		window = append(window, slice)
 
@@ -123,7 +87,7 @@ func CalculateSimpleMovingAverage(periods int, slices []*TimeSlice) {
 	}
 }
 
-func CalculateExponentialMovingAverage(periods int, slices []*TimeSlice) {
+func CalculateExponentialMovingAverage(periods int, slices []*CandleSlice) {
 	p := strconv.Itoa(periods)
 	log.Printf("Calculating EMA - %s", p)
 	multiplier := float64(2) / (float64(periods) + float64(1))
@@ -153,7 +117,7 @@ func CalculateNextEma(current, last, multiplier float64) float64 {
 	return (current-last)*multiplier + last
 }
 
-func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*TimeSlice) {
+func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
 	macdParams := fmt.Sprintf("%d-%d-%d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	fastP := strconv.Itoa(fastEmaPeriods)
 	slowP := strconv.Itoa(slowEmaPeriods)
@@ -177,11 +141,11 @@ func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices
 	}
 }
 
-func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*TimeSlice) {
+func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
 	macdParams := fmt.Sprintf("%d-%d-%d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	multiplier := float64(2) / (float64(signalPeriods) + float64(1))
 
-	var window []*TimeSlice
+	var window []*CandleSlice
 	for _, slice := range slices {
 		macd := slice.Macd[macdParams]
 
@@ -208,7 +172,7 @@ func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, 
 		current := window[len(window)-1]
 
 		lastSignal := last.Macd[macdParams].Signal
-		currentMacd := window[len(window)-1].Macd[macdParams].Macd
+		currentMacd := current.Macd[macdParams].Macd
 
 		if lastSignal == nil { // if first signal calculated than calculate using avg of macd's in window
 			var sum float64 = 0
@@ -224,20 +188,22 @@ func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, 
 		nextEma := CalculateNextEma(*currentMacd, *lastSignal, multiplier)
 
 		current.Macd[macdParams].Signal = &nextEma
+		histogram := *currentMacd - nextEma
+		current.Macd[macdParams].Histogram = &histogram
 	}
 }
 
-func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*TimeSlice) {
+func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
 	log.Printf("Calculating MACD - %d, %d, %d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
 	CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
 }
 
-func CalculateAroon(periods int, slices []*TimeSlice) {
+func CalculateAroon(periods int, slices []*CandleSlice) {
 	log.Printf("Calculating AROON - %d", periods)
 	p := strconv.Itoa(periods)
 
-	var window []*TimeSlice
+	var window []*CandleSlice
 	for _, slice := range slices {
 		window = append(window, slice)
 
@@ -261,7 +227,7 @@ func CalculateAroon(periods int, slices []*TimeSlice) {
 	}
 }
 
-func DaysSinceLastHighLow(window []*TimeSlice) (high, low int){
+func DaysSinceLastHighLow(window []*CandleSlice) (high, low int){
 	high = 0
 	low = 0
 

@@ -13,11 +13,19 @@ import (
 
 type Store struct {
 	Session  *mgo.Session
-	Database *mgo.Database
+	database *mgo.Database
 }
 
 func (self *Store) closeStore() {
 	self.Session.Close()
+}
+
+func (self *Store) GetCollection(name string) *mgo.Collection {
+	return self.database.C(name)
+}
+
+func (self *Store) DropDatabase() error {
+	return self.database.DropDatabase()
 }
 
 type OhlcSchema struct {
@@ -43,7 +51,7 @@ type AroonValue struct {
 	Down *int
 }
 
-type TimeSlice struct {
+type CandleSlice struct {
 	Date   time.Time
 	Step   int
 	Queue  int
@@ -72,7 +80,7 @@ func NewStore() (store *Store, err error) {
 	store = new(Store)
 
 	store.Session = session
-	store.Database = db
+	store.database = db
 
 	return
 }
@@ -132,7 +140,7 @@ func (s *Store) SyncCandles(candles []*poloniex_go_api.Candle, exchange, pair, i
 		return
 	}
 
-	collectionName := BuildTimeSliceCollectionName(exchange, pair, interval)
+	collectionName := BuildCandleSliceCollectionName(exchange, pair, interval)
 	log.Printf("Syncing Candles for collection %s", collectionName)
 
 	startWindow := candles[0].Date
@@ -142,10 +150,10 @@ func (s *Store) SyncCandles(candles []*poloniex_go_api.Candle, exchange, pair, i
 		Key:    []string{"-step"},
 		Unique: true,
 	}
-	s.Database.C(collectionName).EnsureIndex(index)
+	s.GetCollection(collectionName).EnsureIndex(index)
 
-	var ohlc []*TimeSlice
-	s.Database.C(collectionName).Find(bson.M{"date": bson.M{"$gte": startWindow}}).All(&ohlc)
+	var ohlc []*CandleSlice
+	s.GetCollection(collectionName).Find(bson.M{"date": bson.M{"$gte": startWindow}}).All(&ohlc)
 
 	if len(ohlc) == 0 {
 		log.Println("No existing candles in db. Storing all candles")
@@ -172,19 +180,43 @@ func (s *Store) storeCandles(candles []*poloniex_go_api.Candle, collectionName s
 	step := startingStep
 	queue := len(candles) - 1
 
-	s.Database.C(collectionName).UpdateAll(bson.M{}, bson.M{"$inc": bson.M{"queue": len(candles)}})
+	s.GetCollection(collectionName).UpdateAll(bson.M{}, bson.M{"$inc": bson.M{"queue": len(candles)}})
 
 	for _, candle := range candles {
-		ohlc := &TimeSlice{Candle: *candle, Date: time.Unix(int64(candle.Date), 0), Step: step, Queue: queue, Volume: candle.Volume}
-		s.Database.C(collectionName).Insert(ohlc)
+		ohlc := &CandleSlice{Candle: *candle, Date: time.Unix(int64(candle.Date), 0), Step: step, Queue: queue, Volume: candle.Volume}
+		s.GetCollection(collectionName).Insert(ohlc)
 		step++
 		queue--
 	}
 }
 
+func (s *Store) SyncAsks(exchange, currencyPair string, orders []OrderBookEntry) {
+	collectionName := BuildOrderBookCollectionName(exchange, currencyPair, true)
+
+	for _, order := range orders {
+		if order.Amount == 0 {
+			s.GetCollection(collectionName).Remove(bson.M{"price": order.Price})
+			continue
+		}
+		s.GetCollection(collectionName).Upsert(bson.M{"price": order.Price}, order)
+	}
+}
+
+func (s *Store) SyncBids(exchange, currencyPair string, orders []OrderBookEntry) {
+	collectionName := BuildOrderBookCollectionName(exchange, currencyPair, false)
+
+	for _, order := range orders {
+		if order.Amount == 0 {
+			s.GetCollection(collectionName).Remove(bson.M{"price": order.Price})
+			continue
+		}
+		s.GetCollection(collectionName).Upsert(bson.M{"price": order.Price}, order)
+	}
+}
+
 func (s *Store) RetrieveCandlesByDate(exchange, pair, interval string, start, end time.Time) (candles []*OhlcSchema) {
-	collectionName := BuildTimeSliceCollectionName(exchange, pair, interval)
-	error := s.Database.C(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": start.Unix(), "$lte": end.Unix()}}).All(&candles)
+	collectionName := BuildCandleSliceCollectionName(exchange, pair, interval)
+	error := s.GetCollection(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": start.Unix(), "$lte": end.Unix()}}).All(&candles)
 
 	if error != nil {
 		log.Println("Error retrieving candles by date")
@@ -194,15 +226,15 @@ func (s *Store) RetrieveCandlesByDate(exchange, pair, interval string, start, en
 	return
 }
 
-func (s *Store) RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*TimeSlice) {
-	collectionName := BuildTimeSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
+func (s *Store) RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*CandleSlice) {
+	collectionName := BuildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
 	log.Printf("Getting candles from collection %s within queue (%d, %d)", collectionName, start, end)
 
 	var err error
 	if start == -1 || end == -1 {
-		err = s.Database.C(collectionName).Find(bson.M{}).All(&slices)
+		err = s.GetCollection(collectionName).Find(bson.M{}).All(&slices)
 	} else {
-		err = s.Database.C(collectionName).Find(bson.M{"queue": bson.M{"$lte": start, "$gte": end}}).All(&slices)
+		err = s.GetCollection(collectionName).Find(bson.M{"queue": bson.M{"$lte": start, "$gte": end}}).All(&slices)
 	}
 
 	if err != nil {
@@ -229,6 +261,14 @@ func BuildCollectionName(params ... string) string {
 	return strings.Join(params, "-")
 }
 
-func BuildTimeSliceCollectionName(exchange, pair, interval string) string {
-	return BuildCollectionName("TimeSlice", exchange, pair, interval)
+func BuildOrderBookCollectionName(exchange, pair string, isAsk bool) string {
+	if isAsk {
+		return BuildCollectionName("OrderBook", exchange, pair, "ask")
+	} else {
+		return BuildCollectionName("OrderBook", exchange, pair, "bid")
+	}
+}
+
+func BuildCandleSliceCollectionName(exchange, pair, interval string) string {
+	return BuildCollectionName("CandleSlice", exchange, pair, interval)
 }

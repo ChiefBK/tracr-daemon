@@ -1,6 +1,6 @@
 package goku_bot
 
-func Avg(arr []*TimeSlice) float64 {
+func Avg(arr []*CandleSlice) float64 {
 	var sum float64 = 0
 
 	for _, element := range arr {
