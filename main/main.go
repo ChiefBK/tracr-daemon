@@ -48,14 +48,26 @@ func main() {
 		Pair: "USDT_BTC",
 	}
 
-	// TODO - create new order book steward for each pair
-	var orderBookConnections sync.WaitGroup
-	orderBookConnections.Add(1)
-	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC", &orderBookConnections)
+	tickerSteward, err := goku_bot.NewTickerSteward()
 
-	orderBookConnections.Wait()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// TODO - create new order book steward for each pair
+	var websocketConnections sync.WaitGroup
+	websocketConnections.Add(2)
+
+	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC", &websocketConnections)
+	go tickerSteward.ConnectPoloniexTicker(&websocketConnections)
+
+	websocketConnections.Wait()
+
 	log.Printf("Done Waiting - orderbook stored")
 	log.Printf("Starting timer")
+
+	log.Printf("USDT_BTC Ticker : %s", goku_bot.TickerUsdtBtc)
 	timer := time.NewTimer(time.Minute * 3)
 	<-timer.C
 

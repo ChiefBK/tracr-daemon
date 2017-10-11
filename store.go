@@ -269,6 +269,10 @@ func BuildOrderBookCollectionName(exchange, pair string, isAsk bool) string {
 	}
 }
 
+func BuildTickerCollectionName(exchange, pair string) string {
+	return BuildCollectionName("Ticker", exchange, pair)
+}
+
 func BuildCandleSliceCollectionName(exchange, pair, interval string) string {
 	return BuildCollectionName("CandleSlice", exchange, pair, interval)
 }
