@@ -16,7 +16,7 @@ func GetCandles(ohlc []*OhlcSchema) (results []poloniex_go_api.Candle) {
 func GetDateValues(candles []poloniex_go_api.Candle) (results []DateValue) {
 	for _, candle := range candles {
 		results = append(results, DateValue{
-			Date: time.Unix(int64(candle.Date), 0),
+			Date:  time.Unix(int64(candle.Date), 0),
 			Value: candle.Close,
 		})
 	}

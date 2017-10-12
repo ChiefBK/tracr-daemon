@@ -1,13 +1,13 @@
 package goku_bot
 
 import (
-	"gopkg.in/mgo.v2"
-	"poloniex-go-api"
-	"log"
-	"strings"
-	"gopkg.in/mgo.v2/bson"
 	"errors"
 	. "goku-bot/global"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"log"
+	"poloniex-go-api"
+	"strings"
 	"time"
 )
 
@@ -216,11 +216,11 @@ func (s *Store) SyncBids(exchange, currencyPair string, orders []OrderBookEntry)
 
 func (s *Store) RetrieveCandlesByDate(exchange, pair, interval string, start, end time.Time) (candles []*OhlcSchema) {
 	collectionName := BuildCandleSliceCollectionName(exchange, pair, interval)
-	error := s.GetCollection(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": start.Unix(), "$lte": end.Unix()}}).All(&candles)
+	err := s.GetCollection(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": start.Unix(), "$lte": end.Unix()}}).All(&candles)
 
-	if error != nil {
+	if err != nil {
 		log.Println("Error retrieving candles by date")
-		log.Println(error)
+		log.Println(err)
 	}
 
 	return
@@ -257,7 +257,7 @@ func (s *Store) trimCandles(collectionName string) {
 
 }
 
-func BuildCollectionName(params ... string) string {
+func BuildCollectionName(params ...string) string {
 	return strings.Join(params, "-")
 }
 
@@ -267,10 +267,6 @@ func BuildOrderBookCollectionName(exchange, pair string, isAsk bool) string {
 	} else {
 		return BuildCollectionName("OrderBook", exchange, pair, "bid")
 	}
-}
-
-func BuildTickerCollectionName(exchange, pair string) string {
-	return BuildCollectionName("Ticker", exchange, pair)
 }
 
 func BuildCandleSliceCollectionName(exchange, pair, interval string) string {

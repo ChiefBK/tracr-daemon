@@ -1,10 +1,10 @@
 package goku_bot
 
 import (
-	"time"
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 )
 
 type position string
@@ -221,13 +221,13 @@ func CalculateAroon(periods int, slices []*CandleSlice) {
 		down := int(((float64(periods) - float64(low)) / float64(periods)) * 100)
 
 		slice.Aroon[p] = &AroonValue{
-			Up: &up,
+			Up:   &up,
 			Down: &down,
 		}
 	}
 }
 
-func DaysSinceLastHighLow(window []*CandleSlice) (high, low int){
+func DaysSinceLastHighLow(window []*CandleSlice) (high, low int) {
 	high = 0
 	low = 0
 

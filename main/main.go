@@ -18,11 +18,7 @@ var (
 	API_KEY    = os.Getenv("POLONIEX_API_KEY")
 	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
 
-	startDateTime time.Time
 	firstMonitor  time.Time
-	lastMonitor   time.Time
-
-	candlestickSteward *goku_bot.CandlestickSteward
 )
 
 func main() {
@@ -43,9 +39,9 @@ func main() {
 	}
 
 	orderBookSteward := &goku_bot.OrderBookSteward{
-		Store: store,
+		Store:    store,
 		Exchange: "poloniex",
-		Pair: "USDT_BTC",
+		Pair:     "USDT_BTC",
 	}
 
 	tickerSteward, err := goku_bot.NewTickerSteward()
@@ -64,14 +60,15 @@ func main() {
 
 	websocketConnections.Wait()
 
-	log.Printf("Done Waiting - orderbook stored")
-	log.Printf("Starting timer")
+	log.Printf("Websocket connections established and receiving")
 
-	log.Printf("USDT_BTC Ticker : %s", goku_bot.TickerUsdtBtc)
+	runAccount()
+
+	log.Printf("Seeing how things go for 3 min")
 	timer := time.NewTimer(time.Minute * 3)
 	<-timer.C
 
-	//runMonitor()
+	//runCandles()
 
 	//log.Println("Starting Cron job")
 	//c := cron.New()
@@ -85,41 +82,56 @@ func initialize() (err error) {
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
 
-	startDateTime = time.Now()
-
 	store, err := goku_bot.NewStore()
-	log.Println("Created store for candlestick steward")
 
 	if err != nil {
 		err = errors.New("error creating store")
 		return
 	}
 
-	poloniex := poloniex_go_api.New(API_KEY, API_SECRET)
-	log.Println("Created Poloniex API interface for candlestick steward")
+	log.Println("Initializing global variables")
+	goku_bot.PoloniexClient = poloniex_go_api.New(API_KEY, API_SECRET); log.Println("Initialized Poloniex Client")
+	goku_bot.PoloniexBalances = &goku_bot.CompleteBalances{}; log.Println("Initialized Poloniex Balances")
+	goku_bot.TickerUsdtBtc = &goku_bot.Ticker{}; log.Println("Initialized USDT_BTC Ticker")
 
 	if *clean {
 		log.Println("Dropping DB")
 		err = store.DropDatabase()
 	}
 
-	candlestickSteward = &goku_bot.CandlestickSteward{poloniex, store}
-	log.Println("Initialized candlestick steward")
-
 	return
 }
 
-func runMonitor() {
-	log.Println("Starting Monitor")
+func runAccount() {
+	log.Println("Starting Account")
+
+	accountSteward, err := goku_bot.NewAccountSteward()
+
+	if err != nil {
+		log.Printf("There was an error creating the Account Steward: %s", err)
+		return
+	}
+
+	//go accountSteward.SyncBalances()
+	go runFunction(accountSteward.SyncBalances, time.Second * 5)
+}
+
+func runCandles() {
+	log.Println("Starting Candles")
 
 	if firstMonitor.IsZero() {
 		firstMonitor = time.Now()
 	}
 
-	lastMonitor = time.Now()
-
 	var group sync.WaitGroup
 	group.Add(1)
+
+	candlestickSteward, err := goku_bot.NewCandleStickSteward()
+
+	if err != nil {
+		log.Printf("There was an error creating the candlestick steward: %s", err)
+		return
+	}
 
 	go candlestickSteward.SyncCandles(&group)
 
@@ -143,4 +155,11 @@ func runAnalyze() {
 	<-bot1ErrorCh
 
 	log.Println("Finished Analyze")
+}
+
+func runFunction(f func(), every time.Duration){
+	for {
+		go f()
+		<-time.After(every)
+	}
 }

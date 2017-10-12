@@ -1,19 +1,19 @@
 package goku_bot
 
 import (
-	"poloniex-go-api"
-	"time"
-	. "goku-bot/global"
-	"log"
-	"sync"
-	"gopkg.in/mgo.v2/bson"
-	"github.com/gorilla/websocket"
-	"strconv"
-	"net/url"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
+	. "goku-bot/global"
+	"gopkg.in/mgo.v2/bson"
+	"log"
+	"net/url"
+	"poloniex-go-api"
+	"strconv"
+	"sync"
+	"time"
 )
 
 //TODO - Abstract 'Poloniex' to a list of 'Exchanges'
@@ -31,6 +31,40 @@ type CandlestickSteward struct {
 
 type TickerSteward struct {
 	Store *Store
+}
+
+type AccountSteward struct {
+	Poloniex *poloniex_go_api.Poloniex
+	Store    *Store
+}
+
+func NewAccountSteward() (*AccountSteward, error) {
+	store, err := NewStore()
+
+	if err != nil {
+		return nil, errors.New("there was an error creating the store")
+	}
+
+	if PoloniexClient == nil {
+		return nil, errors.New("the poloniex client hasn't been initialized")
+	}
+
+	return &AccountSteward{PoloniexClient, store}, nil
+
+}
+
+func NewCandleStickSteward() (*CandlestickSteward, error) {
+	store, err := NewStore()
+
+	if err != nil {
+		return nil, errors.New("there was an error creating the store")
+	}
+
+	if PoloniexClient == nil {
+		return nil, errors.New("the poloniex client hasn't been initialized")
+	}
+
+	return &CandlestickSteward{PoloniexClient, store}, nil
 }
 
 func NewTickerSteward() (*TickerSteward, error) {
@@ -69,20 +103,6 @@ type OrderBookEntry struct {
 	Amount       float64
 }
 
-type Ticker struct {
-	CurrencyPair       string
-	Last               float64
-	lowestAsk          float64
-	HighestBid         float64
-	PercentChange      float64
-	BaseVolume         float64
-	QuoteVolume        float64
-	IsFrozen           bool
-	TwentyFourHourHigh float64
-	TwentyFourHourLow  float64
-	Updated            time.Time
-}
-
 func websocketConnect(address string, retries int) (*websocket.Conn, error) {
 	u := url.URL{Scheme: "wss", Host: address}
 
@@ -112,6 +132,37 @@ func websocketConnect(address string, retries int) (*websocket.Conn, error) {
 	return connection, nil
 }
 
+func (self *AccountSteward) SyncBalances() {
+	response := self.Poloniex.ReturnCompleteBalances()
+
+	if response.Err != nil {
+		log.Println("there was an error getting the Poloniex balances - stopping balance sync")
+		return
+	}
+
+	balances := response.Data
+
+	PoloniexBalances.BTC = *balances["BTC"]
+	PoloniexBalances.BCH = *balances["BCH"]
+	PoloniexBalances.BCN = *balances["BCN"]
+	PoloniexBalances.BTS = *balances["BTS"]
+	PoloniexBalances.BURST = *balances["BURST"]
+	PoloniexBalances.DASH = *balances["DASH"]
+	PoloniexBalances.EMC2 = *balances["EMC2"]
+	PoloniexBalances.ETH = *balances["ETH"]
+	PoloniexBalances.EXP = *balances["EXP"]
+	PoloniexBalances.FCT = *balances["FCT"]
+	PoloniexBalances.LTC = *balances["LTC"]
+	PoloniexBalances.PINK = *balances["PINK"]
+	PoloniexBalances.VRC = *balances["VRC"]
+	PoloniexBalances.XMR = *balances["XMR"]
+	PoloniexBalances.ZEC = *balances["ZEC"]
+	now := time.Now()
+	PoloniexBalances.Updated = now
+
+	log.Printf("Balances updated at %s", now)
+}
+
 func (self *TickerSteward) ConnectPoloniexTicker(group *sync.WaitGroup) {
 	address := "api2.poloniex.com:443"
 
@@ -130,7 +181,7 @@ func (self *TickerSteward) ConnectPoloniexTicker(group *sync.WaitGroup) {
 		return
 	}
 
-	i := 0
+	isFirst := true
 	for {
 		_, message, err := connection.ReadMessage()
 		if err != nil {
@@ -158,6 +209,7 @@ func (self *TickerSteward) ConnectPoloniexTicker(group *sync.WaitGroup) {
 			continue
 		}
 
+		// Extract information from decoded message
 		last, _ := strconv.ParseFloat(ticker[1].(string), 64)
 		lowestAsk, _ := strconv.ParseFloat(ticker[2].(string), 64)
 		highestBid, _ := strconv.ParseFloat(ticker[3].(string), 64)
@@ -168,21 +220,27 @@ func (self *TickerSteward) ConnectPoloniexTicker(group *sync.WaitGroup) {
 		twentyFourHourHigh, _ := strconv.ParseFloat(ticker[8].(string), 64)
 		twentyFourHourLow, _ := strconv.ParseFloat(ticker[9].(string), 64)
 
-		t := Ticker{
-			"USDT_BTC", last, lowestAsk, highestBid, percentChange,
-			baseVolume, quoteVolume, isFrozen, twentyFourHourHigh,
-			twentyFourHourLow, time.Now(),
-		}
+		// Update Ticker
+		now := time.Now()
+		TickerUsdtBtc.CurrencyPair = "USDT_BTC"
+		TickerUsdtBtc.Last = last
+		TickerUsdtBtc.lowestAsk = lowestAsk
+		TickerUsdtBtc.HighestBid = highestBid
+		TickerUsdtBtc.PercentChange = percentChange
+		TickerUsdtBtc.BaseVolume = baseVolume
+		TickerUsdtBtc.QuoteVolume = quoteVolume
+		TickerUsdtBtc.IsFrozen = isFrozen
+		TickerUsdtBtc.TwentyFourHourHigh = twentyFourHourHigh
+		TickerUsdtBtc.TwentyFourHourLow = twentyFourHourLow
+		TickerUsdtBtc.Updated = now
 
-		TickerUsdtBtc = t // Update global variable
+		log.Printf("Ticker USDT_BTC updated at %s", now)
 
-		if i == 0 {
+		if isFirst {
 			group.Done()
 		}
 
-		log.Printf("T: %s", TickerUsdtBtc)
-
-		i++
+		isFirst = false
 	}
 }
 
@@ -205,7 +263,7 @@ func (self *OrderBookSteward) ConnectPoloniexOrderBook(pair string, group *sync.
 		return
 	}
 
-	i := 0
+	isFirst := true
 	for {
 		_, message, err := connection.ReadMessage()
 		if err != nil {
@@ -226,12 +284,9 @@ func (self *OrderBookSteward) ConnectPoloniexOrderBook(pair string, group *sync.
 			continue
 		}
 
-		log.Printf("M: %s", m)
-
-		//first := m[0]
 		seq := int(m.([]interface{})[1].(float64))
 
-		if i == 0 { //if full order book
+		if isFirst { //if full order book
 			ob := m.([]interface{})[2].([]interface{})[0].([]interface{})[1].(map[string]interface{})
 
 			// Store asks and bids
@@ -254,6 +309,8 @@ func (self *OrderBookSteward) ConnectPoloniexOrderBook(pair string, group *sync.
 				bids = append(bids, entry)
 			}
 			self.Store.SyncBids("poloniex", pair, bids)
+			isFirst = false
+			log.Printf("Initial sync of full order book complete at %s", time.Now())
 			group.Done() // After storing full order book - mark as done
 		} else { // if a set of changes
 			changes := m.([]interface{})[2].([]interface{})
@@ -288,8 +345,8 @@ func (self *OrderBookSteward) ConnectPoloniexOrderBook(pair string, group *sync.
 
 			self.Store.SyncBids("poloniex", pair, bids)
 			self.Store.SyncAsks("poloniex", pair, asks)
+			log.Printf("Recieved Orderbook update at %s", time.Now())
 		}
-		i++
 	}
 }
 
@@ -317,7 +374,7 @@ func (self *CandlestickSteward) SyncCandles(group *sync.WaitGroup) {
 	wg.Add(numWorkers)
 
 	for _, pair := range POLONIEX_PAIRS {
-		for k, _ := range POLONIEX_OHLC_INTERVALS {
+		for k := range POLONIEX_OHLC_INTERVALS {
 			log.Printf("pair: %s, interval: %d", pair, k)
 			go self.BuildCandlesPoloniex(pair, k, syncOhlcErrorsCh, &wg)
 		}
