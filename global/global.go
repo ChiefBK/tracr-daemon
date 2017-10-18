@@ -42,7 +42,7 @@ const (
 var POLONIEX_PAIRS = []string{USDT_BTC_PAIR}
 
 var POLONIEX_OHLC_INTERVALS = map[int]string{
-	FIVE_MIN_INTERVAL:    "5_minutes",
+	FIVE_MIN_INTERVAL: "5_minutes",
 	//FIFTEEN_MIN_INTERVAL: "15_minutes",
 	//THIRTY_MIN_INTERVAL:  "30_minutes",
 	//TWO_HOUR_INTERVAL:    "2_hours",
@@ -50,6 +50,6 @@ var POLONIEX_OHLC_INTERVALS = map[int]string{
 	//ONE_DAY_INTERVAL:     "1_day",
 }
 
-var MACD_PARAMS = [][]int {
+var MACD_PARAMS = [][]int{
 	{12, 26, 9},
 }

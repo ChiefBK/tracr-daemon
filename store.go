@@ -24,6 +24,16 @@ func (self *Store) GetCollection(name string) *mgo.Collection {
 	return self.database.C(name)
 }
 
+func (self *Store) EmptyCollection(name string) {
+	self.GetCollection(name).RemoveAll(bson.M{})
+}
+
+func (self *Store) InsertAll(name string, objects []interface{}) {
+	for _, ob := range objects {
+		self.GetCollection(name).Insert(ob)
+	}
+}
+
 func (self *Store) DropDatabase() error {
 	return self.database.DropDatabase()
 }
@@ -271,4 +281,8 @@ func BuildOrderBookCollectionName(exchange, pair string, isAsk bool) string {
 
 func BuildCandleSliceCollectionName(exchange, pair, interval string) string {
 	return BuildCollectionName("CandleSlice", exchange, pair, interval)
+}
+
+func BuildMyTradeHistoryCollectionName(exchange, pair string) string {
+	return BuildCollectionName("History", exchange, pair)
 }

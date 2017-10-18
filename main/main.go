@@ -1,24 +1,24 @@
 package main
 
 import (
-	"poloniex-go-api"
-	"time"
+	"errors"
+	"flag"
 	"goku-bot"
 	"log"
-	"flag"
-	"errors"
+	"poloniex-go-api"
+	"time"
 
-	"sync"
-	"goku-bot/strategies"
 	. "goku-bot/global"
+	"goku-bot/strategies"
 	"os"
+	"sync"
 )
 
 var (
 	API_KEY    = os.Getenv("POLONIEX_API_KEY")
 	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
 
-	firstMonitor  time.Time
+	firstMonitor time.Time
 )
 
 func main() {
@@ -53,16 +53,23 @@ func main() {
 
 	// TODO - create new order book steward for each pair
 	var websocketConnections sync.WaitGroup
-	websocketConnections.Add(2)
+	websocketConnections.Add(1)
 
 	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC", &websocketConnections)
-	go tickerSteward.ConnectPoloniexTicker(&websocketConnections)
+	go tickerSteward.ConnectPoloniexTicker()
 
 	websocketConnections.Wait()
 
 	log.Printf("Websocket connections established and receiving")
 
-	runAccount()
+	startGatheringAccountInfo()
+
+	isTradesSynced := <-goku_bot.TradesSynced // make sure my trades have been synced
+	log.Printf("trades received: %s", isTradesSynced)
+	balances := <-goku_bot.PoloniexBalances // make sure balances have received data
+	log.Printf("Balances received: %s", balances)
+	ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
+	log.Printf("ticker received: %s", ticker)
 
 	log.Printf("Seeing how things go for 3 min")
 	timer := time.NewTimer(time.Minute * 3)
@@ -90,9 +97,8 @@ func initialize() (err error) {
 	}
 
 	log.Println("Initializing global variables")
-	goku_bot.PoloniexClient = poloniex_go_api.New(API_KEY, API_SECRET); log.Println("Initialized Poloniex Client")
-	goku_bot.PoloniexBalances = &goku_bot.CompleteBalances{}; log.Println("Initialized Poloniex Balances")
-	goku_bot.TickerUsdtBtc = &goku_bot.Ticker{}; log.Println("Initialized USDT_BTC Ticker")
+	goku_bot.PoloniexClient = poloniex_go_api.New(API_KEY, API_SECRET)
+	log.Println("Initialized Poloniex Client")
 
 	if *clean {
 		log.Println("Dropping DB")
@@ -102,7 +108,7 @@ func initialize() (err error) {
 	return
 }
 
-func runAccount() {
+func startGatheringAccountInfo() {
 	log.Println("Starting Account")
 
 	accountSteward, err := goku_bot.NewAccountSteward()
@@ -113,7 +119,8 @@ func runAccount() {
 	}
 
 	//go accountSteward.SyncBalances()
-	go runFunction(accountSteward.SyncBalances, time.Second * 5)
+	go repeatFunction(accountSteward.SyncBalances, time.Second*5)
+	go repeatFunction(accountSteward.SyncTrades, time.Second*10)
 }
 
 func runCandles() {
@@ -157,9 +164,9 @@ func runAnalyze() {
 	log.Println("Finished Analyze")
 }
 
-func runFunction(f func(), every time.Duration){
+func repeatFunction(f func(), every time.Duration) {
 	for {
-		go f()
+		f()
 		<-time.After(every)
 	}
 }

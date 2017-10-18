@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
-	"net/url"
-	"log"
-	"time"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"github.com/gorilla/websocket"
+	"log"
+	"net/url"
 	"strconv"
+	"time"
 )
 
 type FullOrderBook struct {
