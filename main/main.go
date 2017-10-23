@@ -12,6 +12,7 @@ import (
 	"goku-bot/strategies"
 	"os"
 	"sync"
+	"encoding/json"
 )
 
 var (
@@ -32,33 +33,16 @@ func main() {
 
 	log.Println("Initialization Complete")
 
-	store, err := goku_bot.NewStore()
-
-	if err != nil {
-		log.Printf("Error connecting to store: %s", err)
-	}
-
-	orderBookSteward := &goku_bot.OrderBookSteward{
-		Store:    store,
-		Exchange: "poloniex",
-		Pair:     "USDT_BTC",
-	}
-
-	tickerSteward, err := goku_bot.NewTickerSteward()
+	orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
+	tickerSteward := goku_bot.NewTickerSteward()
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	// TODO - create new order book steward for each pair
-	var websocketConnections sync.WaitGroup
-	websocketConnections.Add(1)
-
-	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC", &websocketConnections)
+	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC")
 	go tickerSteward.ConnectPoloniexTicker()
-
-	websocketConnections.Wait()
 
 	log.Printf("Websocket connections established and receiving")
 
@@ -70,10 +54,24 @@ func main() {
 	log.Printf("Balances received: %s", balances)
 	ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
 	log.Printf("ticker received: %s", ticker)
+	orderBookUsdtBtc := <-goku_bot.OrderBookChannels["USDT_BTC"]
+	log.Printf("orderBook bids : %s", orderBookUsdtBtc.GetBidsDescending())
+	log.Printf("orderBook asks : %s", orderBookUsdtBtc.GetAsksAscending())
 
 	log.Printf("Seeing how things go for 3 min")
-	timer := time.NewTimer(time.Minute * 3)
-	<-timer.C
+
+	tradeSteward, _ := goku_bot.NewTradeStewared()
+
+	netProfit := tradeSteward.CalculateTradeNetProfit("poloniex", "USDT_BTC")
+	positions := tradeSteward.GetPositions("poloniex", "USDT_BTC")
+
+	jsonPositions, _ := json.Marshal(positions)
+
+	log.Printf("Net Profit: %f", netProfit)
+	log.Printf("Positions: %s", jsonPositions)
+
+	//timer := time.NewTimer(time.Minute * 3)
+	//<-timer.C
 
 	//runCandles()
 
@@ -89,7 +87,7 @@ func initialize() (err error) {
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
 
-	store, err := goku_bot.NewStore()
+	store, err := goku_bot.NewMgoStore()
 
 	if err != nil {
 		err = errors.New("error creating store")

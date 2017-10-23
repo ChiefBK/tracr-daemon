@@ -39,7 +39,7 @@ func (aq *ActionQueue) pop() *Action {
 }
 
 type Indicator struct {
-	Store    *Store
+	Store    *MgoStore
 	Exchange string
 	Pair     string
 	Interval int

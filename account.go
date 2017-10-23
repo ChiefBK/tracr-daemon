@@ -9,11 +9,11 @@ import (
 
 type AccountSteward struct {
 	Poloniex *poloniex_go_api.Poloniex
-	Store    *Store
+	Store    Store
 }
 
 func NewAccountSteward() (*AccountSteward, error) {
-	store, err := NewStore()
+	store, err := NewMgoStore()
 
 	if err != nil {
 		return nil, errors.New("there was an error creating the store")
@@ -69,19 +69,15 @@ func (self *AccountSteward) SyncTrades() {
 	response := self.Poloniex.ReturnMyTradeHistory()
 
 	if response.Err != nil {
-		log.Println("there was an error getting my Poloniex trade history - stopping sync : %s", response.Err)
+		log.Printf("there was an error getting my Poloniex trade history - stopping sync : %s", response.Err)
 		return
 	}
 
 	data := response.Data
 
-	for pair, orders := range data {
-		collectionName := BuildMyTradeHistoryCollectionName("poloniex", pair)
 
-		self.Store.EmptyCollection(collectionName)
-		for _, order := range orders {
-			self.Store.GetCollection(collectionName).Insert(order)
-		}
+	for pair, trades := range data {
+		self.Store.ReplaceTrades("poloniex", pair, trades)
 	}
 
 	select {

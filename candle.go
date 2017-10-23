@@ -12,11 +12,11 @@ import (
 
 type CandlestickSteward struct {
 	Poloniex *poloniex_go_api.Poloniex
-	Store    *Store
+	Store    Store
 }
 
 func NewCandleStickSteward() (*CandlestickSteward, error) {
-	store, err := NewStore()
+	store, err := NewMgoStore()
 
 	if err != nil {
 		return nil, errors.New("there was an error creating the store")
@@ -91,6 +91,6 @@ func (self *CandlestickSteward) CalculateIndicators(exchange, pair string, inter
 	CalculateAroon(25, allSlices)
 
 	for _, slice := range allSlices {
-		self.Store.GetCollection(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
+		self.Store.getCollection(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
 	}
 }

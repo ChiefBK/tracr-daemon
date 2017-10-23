@@ -1,8 +1,6 @@
 package goku_bot
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -27,18 +25,10 @@ type Ticker struct {
 
 var TickerUsdtBtc = make(chan Ticker)
 
-type TickerSteward struct {
-	Store *Store
-}
+type TickerSteward struct{}
 
-func NewTickerSteward() (*TickerSteward, error) {
-	store, err := NewStore()
-
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error creating Ticker Steward: %s", err))
-	}
-
-	return &TickerSteward{store}, nil
+func NewTickerSteward() *TickerSteward {
+	return &TickerSteward{}
 }
 
 func (self *TickerSteward) ConnectPoloniexTicker() {
