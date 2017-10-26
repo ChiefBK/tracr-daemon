@@ -6,12 +6,13 @@ import (
 	"poloniex-go-api"
 	"sort"
 	"time"
+	"log"
+	"encoding/json"
+	"math"
 )
 
-var TradesSynced = make(chan bool) // 'true' is sent to channel if trades have been updated
-
 type TradeSteward struct {
-	Store *MgoStore
+	Store Store
 }
 
 type Position struct {
@@ -86,4 +87,144 @@ func (self *TradeSteward) GetPositions(exchange, pair string) (positions []Posit
 	return
 }
 
-//func (self *TradeSteward)
+type PositionResult struct {
+	Open          Position
+	Close         Position
+	Amount        float64
+	NetPercentage float64
+	NetUsd        float64
+}
+
+type PositionStack struct {
+	Positions []*Position
+}
+
+func (self *PositionStack) push(position Position) {
+	self.Positions = append(self.Positions, &position)
+}
+
+func (self *PositionStack) pop() {
+	self.Positions = self.Positions[:len(self.Positions)-1]
+}
+
+func (self *PositionStack) peek() *Position {
+	l := len(self.Positions)
+	return self.Positions[l-1]
+}
+
+func (self *PositionStack) len() int {
+	return len(self.Positions)
+}
+
+func net(open, close Position) (netUsd, netPercentage float64) {
+	var buyRate float64
+	var sellRate float64
+	if open.Direction == "buy" {
+		buyRate = open.Rate
+		sellRate = close.Rate
+	} else {
+		buyRate = close.Rate
+		sellRate = open.Rate
+	}
+	var amount float64 = math.Min(open.Amount, close.Amount)
+
+	netPercentage = 100 * ((sellRate / buyRate) - 1)
+	netUsd = (sellRate - buyRate) * amount
+
+	return
+}
+
+func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (closedPositions []PositionResult) {
+	positions := self.GetPositions(exchange, pair)
+	jsonPositions, _ := json.Marshal(positions)
+
+	log.Printf("positions : %s", jsonPositions)
+
+	var sellPositionStack *PositionStack = new(PositionStack)
+	var buyPositionStack *PositionStack = new(PositionStack)
+
+	for _, position := range positions { // Add positions to respective stacks
+		if position.Direction == "buy" {
+			buyPositionStack.push(position)
+		} else {
+			sellPositionStack.push(position)
+		}
+	}
+	log.Printf("buyPositionStack : %s", buyPositionStack)
+	log.Printf("sellPositionStack : %s", sellPositionStack)
+
+	for buyPositionStack.len() > 0 && sellPositionStack.len() > 0 { // while both stacks still have one or more elements
+		buyPosition := buyPositionStack.peek()
+		sellPosition := sellPositionStack.peek()
+		//log.Printf("sellPosition : %s", sellPosition)
+		//log.Printf("buyPosition : %s", buyPosition)
+
+		var closePositionStack *PositionStack
+		var openPositionStack *PositionStack
+		if buyPosition.Date.Before(sellPosition.Date) { // figure out which stack is closing and opening
+			closePositionStack = sellPositionStack
+			openPositionStack = buyPositionStack
+		} else {
+			closePositionStack = buyPositionStack
+			openPositionStack = sellPositionStack
+		}
+		closePosition := closePositionStack.peek()
+		openPosition := openPositionStack.peek()
+
+		var amountToClose float64
+		var amountLeft float64
+		var popOpenPosition bool = true
+
+		amountToClose = openPosition.Amount
+		amountLeft = closePosition.Amount - amountToClose
+
+		if closePosition.Amount < openPosition.Amount {
+			amountToClose = closePosition.Amount
+			amountLeft = openPosition.Amount - amountToClose
+			popOpenPosition = false
+		}
+
+		if amountLeft == 0 { // if both open and close positions are of the same amount
+			netUsd, netPercentage := net(*openPosition, *closePosition)
+			closedPositions = append(closedPositions,
+				PositionResult{
+					Amount:        openPosition.Amount,
+					Open:          *openPosition,
+					Close:         *closePosition,
+					NetPercentage: netPercentage,
+					NetUsd:        netUsd,
+				})
+			closePositionStack.pop()
+			openPositionStack.pop()
+			log.Printf("popped both")
+		} else if popOpenPosition {
+			netUsd, netPercentage := net(*openPosition, *closePosition)
+			closedPositions = append(closedPositions,
+				PositionResult{
+					Amount:        openPosition.Amount,
+					Open:          *openPosition,
+					Close:         *closePosition,
+					NetPercentage: netPercentage,
+					NetUsd:        netUsd,
+				})
+			closePosition.Amount = amountLeft
+			openPositionStack.pop()
+			log.Printf("popped open")
+		} else {
+			netUsd, netPercentage := net(*openPosition, *closePosition)
+			closedPositions = append(closedPositions,
+				PositionResult{
+					Amount:        closePosition.Amount,
+					Open:          *openPosition,
+					Close:         *closePosition,
+					NetPercentage: netPercentage,
+					NetUsd:        netUsd,
+				})
+			openPosition.Amount = amountLeft
+			closePositionStack.pop()
+			log.Printf("popped close")
+		}
+	}
+
+	return
+}

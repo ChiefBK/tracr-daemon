@@ -9,12 +9,6 @@ import (
 
 type position string
 
-const (
-	openShort     = "openShort"
-	openLong      = "openLong"
-	closePosition = "closePosition"
-)
-
 type Action struct {
 	Position string
 }

@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+var TradeHistorySynced = make(chan bool)             // 'true' is sent to channel if trades have been updated
+var DepositWithdrawalHistorySynced = make(chan bool) // 'true' is sent to channel if trades have been updated
+
 type AccountSteward struct {
 	Poloniex *poloniex_go_api.Poloniex
 	Store    Store
@@ -65,7 +68,7 @@ func (self *AccountSteward) SyncBalances() {
 	log.Printf("Balances updated")
 }
 
-func (self *AccountSteward) SyncTrades() {
+func (self *AccountSteward) SyncTradeHistory() {
 	response := self.Poloniex.ReturnMyTradeHistory()
 
 	if response.Err != nil {
@@ -75,15 +78,35 @@ func (self *AccountSteward) SyncTrades() {
 
 	data := response.Data
 
-
 	for pair, trades := range data {
 		self.Store.ReplaceTrades("poloniex", pair, trades)
 	}
 
 	select {
-	case TradesSynced <- true:
-	case <-time.After(1 * time.Second):
+	case TradeHistorySynced <- true:
+	case <-time.After(3 * time.Second):
 	}
 
 	log.Printf("Trades synced")
+}
+
+func (self *AccountSteward) SyncDepositWithdrawlHistory() {
+	response := self.Poloniex.ReturnDepositsWithdrawals()
+
+	if response.Err != nil {
+		log.Printf("there was an error getting my Poloniex deposit-withdrawl history : %s", response.Err)
+		return
+	}
+
+	data := response.Data
+	deposits := data.Deposits
+	withdrawals := data.Withdrawals
+
+	self.Store.ReplaceDeposits("poloniex", deposits)
+	self.Store.ReplaceWithdrawals("poloniex", withdrawals)
+
+	select {
+	case DepositWithdrawalHistorySynced <- true:
+	case <-time.After(3 * time.Second):
+	}
 }

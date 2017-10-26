@@ -48,8 +48,10 @@ func main() {
 
 	startGatheringAccountInfo()
 
-	isTradesSynced := <-goku_bot.TradesSynced // make sure my trades have been synced
-	log.Printf("trades received: %s", isTradesSynced)
+	isTradesSynced := <-goku_bot.TradeHistorySynced // make sure my trades have been synced
+	log.Printf("trade history received: %s", isTradesSynced)
+	isDepositWithdrawalHistorySynced := <-goku_bot.DepositWithdrawalHistorySynced // make sure my deposit-withdrawal history have been synced
+	log.Printf("deposit-withdrawal history received: %s", isDepositWithdrawalHistorySynced)
 	balances := <-goku_bot.PoloniexBalances // make sure balances have received data
 	log.Printf("Balances received: %s", balances)
 	ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
@@ -64,11 +66,14 @@ func main() {
 
 	netProfit := tradeSteward.CalculateTradeNetProfit("poloniex", "USDT_BTC")
 	positions := tradeSteward.GetPositions("poloniex", "USDT_BTC")
+	positionResults := tradeSteward.CalculatePositionNetProfits("poloniex", "USDT_BTC")
 
 	jsonPositions, _ := json.Marshal(positions)
+	jsonPositionResults, _ := json.Marshal(positionResults)
 
 	log.Printf("Net Profit: %f", netProfit)
 	log.Printf("Positions: %s", jsonPositions)
+	log.Printf("Position Results: %s", jsonPositionResults)
 
 	//timer := time.NewTimer(time.Minute * 3)
 	//<-timer.C
@@ -118,7 +123,8 @@ func startGatheringAccountInfo() {
 
 	//go accountSteward.SyncBalances()
 	go repeatFunction(accountSteward.SyncBalances, time.Second*5)
-	go repeatFunction(accountSteward.SyncTrades, time.Second*10)
+	go repeatFunction(accountSteward.SyncTradeHistory, time.Second*10)
+	go repeatFunction(accountSteward.SyncDepositWithdrawlHistory, time.Second*10)
 }
 
 func runCandles() {

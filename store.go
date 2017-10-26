@@ -13,13 +13,26 @@ import (
 
 type Store interface {
 	CloseStore()
-	EmptyCollection(string) error
+	EmptyCollection(name string) error
+	DropDatabase() error
 
-	getCollection(string) *mgo.Collection
+	getCollection(name string) *mgo.Collection
+	get(collectionName string, find *bson.M, sort *string, result interface{})
 
-	GetTrades(string, string, *string) []poloniex_go_api.Trade
+	GetTrades(exchange, pair string, sort *string) (trades []poloniex_go_api.Trade)
 	InsertTrades(exchange, pair string, trades []poloniex_go_api.Trade)
 	ReplaceTrades(exchange, pair string, trades []poloniex_go_api.Trade)
+
+	InsertDeposits(exchange string, deposits []poloniex_go_api.Deposit)
+	GetDeposits(exchange string, sort *string) (deposits []poloniex_go_api.Deposit)
+	ReplaceDeposits(exchange string, deposits []poloniex_go_api.Deposit)
+
+	InsertWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal)
+	GetWithdrawals(exchange string, sort *string) (withdrawals []poloniex_go_api.Withdrawal)
+	ReplaceWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal)
+
+	SyncCandles(candles []*poloniex_go_api.Candle, exchange, pair, interval string)
+	RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*CandleSlice)
 }
 
 type MgoStore struct {
@@ -58,7 +71,7 @@ func (self *MgoStore) EmptyCollection(name string) error {
 }
 
 func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []poloniex_go_api.Trade) {
-	name := BuildMyTradeHistoryCollectionName(exchange, pair)
+	name := buildMyTradeHistoryCollectionName(exchange, pair)
 
 	sortVal := ""
 	if sort != nil {
@@ -71,16 +84,68 @@ func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []p
 }
 
 func (self *MgoStore) InsertTrades(exchange, pair string, trades []poloniex_go_api.Trade) {
-	collectionName := BuildMyTradeHistoryCollectionName(exchange, pair)
+	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
 	for _, trade := range trades {
 		self.getCollection(collectionName).Insert(trade)
 	}
 }
 
 func (self *MgoStore) ReplaceTrades(exchange, pair string, trades []poloniex_go_api.Trade) {
-	collectionName := BuildMyTradeHistoryCollectionName(exchange, pair)
+	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
 	self.EmptyCollection(collectionName)
 	self.InsertTrades(exchange, pair, trades)
+}
+
+func (self *MgoStore) InsertDeposits(exchange string, deposits []poloniex_go_api.Deposit) {
+	collectionName := buildDepositHistoryCollectionName(exchange)
+	for _, deposit := range deposits {
+		self.getCollection(collectionName).Insert(deposit)
+	}
+}
+
+func (self *MgoStore) GetDeposits(exchange string, sort *string) (deposits []poloniex_go_api.Deposit) {
+	name := buildDepositHistoryCollectionName(exchange)
+	self.get(name, nil, nil, &deposits)
+	return
+}
+
+func (self *MgoStore) ReplaceDeposits(exchange string, deposits []poloniex_go_api.Deposit) {
+	name := buildDepositHistoryCollectionName(exchange)
+	self.EmptyCollection(name)
+	self.InsertDeposits(exchange, deposits)
+}
+
+func (self *MgoStore) InsertWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal) {
+	collectionName := buildWithdrawalHistoryCollectionName(exchange)
+	for _, deposit := range withdrawals {
+		self.getCollection(collectionName).Insert(deposit)
+	}
+}
+
+func (self *MgoStore) GetWithdrawals(exchange string, sort *string) (withdrawals []poloniex_go_api.Withdrawal) {
+	name := buildDepositHistoryCollectionName(exchange)
+	self.get(name, nil, nil, &withdrawals)
+	return
+}
+
+func (self *MgoStore) ReplaceWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal) {
+	name := buildWithdrawalHistoryCollectionName(exchange)
+	self.EmptyCollection(name)
+	self.InsertWithdrawals(exchange, withdrawals)
+}
+
+func (self *MgoStore) get(collectionName string, find *bson.M, sort *string, result interface{}) {
+	sortVal := ""
+	if sort != nil {
+		sortVal = *sort
+	}
+
+	findVal := bson.M{}
+	if find != nil {
+		findVal = *find
+	}
+
+	self.getCollection(collectionName).Find(findVal).Sort(sortVal).All(&result)
 }
 
 func (self *MgoStore) DropDatabase() error {
@@ -182,7 +247,7 @@ func (s *MgoStore) SyncCandles(candles []*poloniex_go_api.Candle, exchange, pair
 		return
 	}
 
-	collectionName := BuildCandleSliceCollectionName(exchange, pair, interval)
+	collectionName := buildCandleSliceCollectionName(exchange, pair, interval)
 	log.Printf("Syncing Candles for collection %s", collectionName)
 
 	startWindow := candles[0].Date
@@ -233,7 +298,7 @@ func (s *MgoStore) storeCandles(candles []*poloniex_go_api.Candle, collectionNam
 }
 
 func (s *MgoStore) RetrieveCandlesByDate(exchange, pair, interval string, start, end time.Time) (candles []*OhlcSchema) {
-	collectionName := BuildCandleSliceCollectionName(exchange, pair, interval)
+	collectionName := buildCandleSliceCollectionName(exchange, pair, interval)
 	err := s.getCollection(collectionName).Find(bson.M{"candle.date": bson.M{"$gte": start.Unix(), "$lte": end.Unix()}}).All(&candles)
 
 	if err != nil {
@@ -245,7 +310,7 @@ func (s *MgoStore) RetrieveCandlesByDate(exchange, pair, interval string, start,
 }
 
 func (s *MgoStore) RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*CandleSlice) {
-	collectionName := BuildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
+	collectionName := buildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
 	log.Printf("Getting candles from collection %s within queue (%d, %d)", collectionName, start, end)
 
 	var err error
@@ -266,7 +331,7 @@ func (s *MgoStore) RetrieveSlicesByQueue(exchange, pair string, interval, start,
 func (s *MgoStore) RetrieveMacdByQueue(exchange, pair string, interval int, macdParams []int, start, end int) (results []MacdSchema) {
 	//stringParams := strings.Split(fmt.Sprint(macdParams), " ")
 
-	//collectionName := BuildCollectionName("Indicator", exchange, pair, POLONIEX_OHLC_INTERVALS[interval], strings.Join(stringParams, "-"))
+	//collectionName := buildCollectionName("Indicator", exchange, pair, POLONIEX_OHLC_INTERVALS[interval], strings.Join(stringParams, "-"))
 	return
 }
 
@@ -275,14 +340,22 @@ func (s *MgoStore) trimCandles(collectionName string) {
 
 }
 
-func BuildCollectionName(params ...string) string {
+func buildCollectionName(params ...string) string {
 	return strings.Join(params, "-")
 }
 
-func BuildCandleSliceCollectionName(exchange, pair, interval string) string {
-	return BuildCollectionName("CandleSlice", exchange, pair, interval)
+func buildCandleSliceCollectionName(exchange, pair, interval string) string {
+	return buildCollectionName("CandleSlice", exchange, pair, interval)
 }
 
-func BuildMyTradeHistoryCollectionName(exchange, pair string) string {
-	return BuildCollectionName("MyTradeHistory", exchange, pair)
+func buildMyTradeHistoryCollectionName(exchange, pair string) string {
+	return buildCollectionName("MyTradeHistory", exchange, pair)
+}
+
+func buildDepositHistoryCollectionName(exchange string) string {
+	return buildCollectionName("MyDepositHistory", exchange)
+}
+
+func buildWithdrawalHistoryCollectionName(exchange string) string {
+	return buildCollectionName("MyWithdrawlHistory", exchange)
 }

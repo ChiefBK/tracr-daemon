@@ -83,7 +83,7 @@ func (self *CandlestickSteward) BuildCandlesPoloniex(pair string, interval int, 
 }
 
 func (self *CandlestickSteward) CalculateIndicators(exchange, pair string, interval int) {
-	collectionName := BuildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
+	collectionName := buildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
 	allSlices := self.Store.RetrieveSlicesByQueue(exchange, pair, interval, -1, -1)
 
 	CalculateExponentialMovingAverage(10, allSlices)
