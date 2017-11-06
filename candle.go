@@ -3,20 +3,20 @@ package goku_bot
 import (
 	"errors"
 	. "goku-bot/global"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"poloniex-go-api"
 	"sync"
 	"time"
+	"goku-bot/store"
 )
 
 type CandlestickSteward struct {
 	Poloniex *poloniex_go_api.Poloniex
-	Store    Store
+	Store    store.Store
 }
 
 func NewCandleStickSteward() (*CandlestickSteward, error) {
-	store, err := NewMgoStore()
+	store, err := store.NewStore()
 
 	if err != nil {
 		return nil, errors.New("there was an error creating the store")
@@ -83,14 +83,14 @@ func (self *CandlestickSteward) BuildCandlesPoloniex(pair string, interval int, 
 }
 
 func (self *CandlestickSteward) CalculateIndicators(exchange, pair string, interval int) {
-	collectionName := buildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
-	allSlices := self.Store.RetrieveSlicesByQueue(exchange, pair, interval, -1, -1)
-
-	CalculateExponentialMovingAverage(10, allSlices)
-	CalculateMacd(12, 26, 9, allSlices)
-	CalculateAroon(25, allSlices)
-
-	for _, slice := range allSlices {
-		self.Store.getCollection(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
-	}
+	//collectionName := buildCandleSliceCollectionName(exchange, pair, POLONIEX_OHLC_INTERVALS[interval])
+	//allSlices := self.Store.RetrieveSlicesByQueue(exchange, pair, interval, -1, -1)
+	//
+	//CalculateExponentialMovingAverage(10, allSlices)
+	//CalculateMacd(12, 26, 9, allSlices)
+	//CalculateAroon(25, allSlices)
+	//
+	//for _, slice := range allSlices {
+	//	self.Store.getCollection(collectionName).Update(bson.M{"queue": slice.Queue}, slice)
+	//}
 }

@@ -1,12 +1,12 @@
 package goku_bot
 
 import (
+	"github.com/gorilla/websocket"
+	"net/url"
+	"log"
+	"time"
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"log"
-	"net/url"
-	"time"
 )
 
 func websocketConnect(address string, retries int) (*websocket.Conn, error) {

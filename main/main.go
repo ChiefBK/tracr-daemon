@@ -4,15 +4,18 @@ import (
 	"errors"
 	"flag"
 	"goku-bot"
-	"log"
-	"poloniex-go-api"
 	"time"
 
 	. "goku-bot/global"
+	log "github.com/sirupsen/logrus"
 	"goku-bot/strategies"
 	"os"
 	"sync"
-	"encoding/json"
+	store2 "goku-bot/store"
+	"goku-bot/collectors"
+	"goku-bot/processors"
+	"goku-bot/streams"
+	"goku-bot/receivers"
 )
 
 var (
@@ -26,57 +29,72 @@ func main() {
 	err := initialize()
 
 	if err != nil {
-		log.Println("Initialization Error")
-		log.Println(err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Initialization error")
 		return
 	}
 
-	log.Println("Initialization Complete")
+	log.Info("Initialization Complete")
 
-	orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
-	tickerSteward := goku_bot.NewTickerSteward()
+	go collectors.Start()
+	go processors.StartProcessingCollectors()
+	go processors.StartProcessingReceivers()
+	go receivers.Start()
+
+	orderBook := streams.ReadOrderBookStream("poloniex", "USDT_BTC")
 
 	if err != nil {
-		log.Println(err)
-		return
+		log.WithFields(log.Fields{"error": err}).Warn("There was an error Marshalling orderbook")
 	}
 
-	go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC")
-	go tickerSteward.ConnectPoloniexTicker()
+	//log.Printf("OrderBook: %s", ob)
+	log.Printf("OrderBook2: %s", orderBook)
 
-	log.Printf("Websocket connections established and receiving")
+	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
+	//tickerSteward := goku_bot.NewTickerSteward()
+	//
+	//if err != nil {
+	//	log.Println(err)
+	//	return
+	//}
+	//
+	//go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC")
+	//go tickerSteward.ConnectPoloniexTicker()
+	//
+	//log.Printf("Websocket connections established and receiving")
+	//
+	//startGatheringAccountInfo()
+	//
+	//isTradesSynced := <-goku_bot.TradeHistorySynced // make sure my trades have been synced
+	//log.Printf("trade history received: %s", isTradesSynced)
+	//isDepositWithdrawalHistorySynced := <-goku_bot.DepositWithdrawalHistorySynced // make sure my deposit-withdrawal history have been synced
+	//log.Printf("deposit-withdrawal history received: %s", isDepositWithdrawalHistorySynced)
+	//balances := <-goku_bot.PoloniexBalances // make sure balances have received data
+	//log.Printf("Balances received: %s", balances)
+	//ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
+	//log.Printf("ticker received: %s", ticker)
+	//orderBookUsdtBtc := <-goku_bot.OrderBookChannels["USDT_BTC"]
+	//log.Printf("orderBook bids : %s", orderBookUsdtBtc.GetBidsDescending())
+	//log.Printf("orderBook asks : %s", orderBookUsdtBtc.GetAsksAscending())
+	//
+	//log.Printf("Seeing how things go for 3 min")
+	//
+	//tradeSteward, _ := goku_bot.NewTradeStewared()
+	//
+	//netProfit := tradeSteward.CalculateTradeNetProfit("poloniex", "USDT_BTC")
+	//positions := tradeSteward.GetPositions("poloniex", "USDT_BTC")
+	//positionResults := tradeSteward.CalculatePositionNetProfits("poloniex", "USDT_BTC")
+	//
+	//var netUsdSum float64 = 0
+	//for _, result := range positionResults {
+	//	netUsdSum += result.NetUsd
+	//}
+	//
+	//log.Printf("Net USD: %f", netUsdSum)
 
-	startGatheringAccountInfo()
-
-	isTradesSynced := <-goku_bot.TradeHistorySynced // make sure my trades have been synced
-	log.Printf("trade history received: %s", isTradesSynced)
-	isDepositWithdrawalHistorySynced := <-goku_bot.DepositWithdrawalHistorySynced // make sure my deposit-withdrawal history have been synced
-	log.Printf("deposit-withdrawal history received: %s", isDepositWithdrawalHistorySynced)
-	balances := <-goku_bot.PoloniexBalances // make sure balances have received data
-	log.Printf("Balances received: %s", balances)
-	ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
-	log.Printf("ticker received: %s", ticker)
-	orderBookUsdtBtc := <-goku_bot.OrderBookChannels["USDT_BTC"]
-	log.Printf("orderBook bids : %s", orderBookUsdtBtc.GetBidsDescending())
-	log.Printf("orderBook asks : %s", orderBookUsdtBtc.GetAsksAscending())
-
-	log.Printf("Seeing how things go for 3 min")
-
-	tradeSteward, _ := goku_bot.NewTradeStewared()
-
-	netProfit := tradeSteward.CalculateTradeNetProfit("poloniex", "USDT_BTC")
-	positions := tradeSteward.GetPositions("poloniex", "USDT_BTC")
-	positionResults := tradeSteward.CalculatePositionNetProfits("poloniex", "USDT_BTC")
-
-	jsonPositions, _ := json.Marshal(positions)
-	jsonPositionResults, _ := json.Marshal(positionResults)
-
-	log.Printf("Net Profit: %f", netProfit)
-	log.Printf("Positions: %s", jsonPositions)
-	log.Printf("Position Results: %s", jsonPositionResults)
-
-	//timer := time.NewTimer(time.Minute * 3)
-	//<-timer.C
+	timer := time.NewTimer(time.Minute * 3)
+	<-timer.C
 
 	//runCandles()
 
@@ -92,21 +110,25 @@ func initialize() (err error) {
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
 
-	store, err := goku_bot.NewMgoStore()
+	store, err := store2.NewStore()
 
 	if err != nil {
-		err = errors.New("error creating store")
+		err = errors.New("error creating connection to store")
 		return
 	}
 
-	log.Println("Initializing global variables")
-	goku_bot.PoloniexClient = poloniex_go_api.New(API_KEY, API_SECRET)
-	log.Println("Initialized Poloniex Client")
-
 	if *clean {
-		log.Println("Dropping DB")
+		log.Info("Dropping DB")
 		err = store.DropDatabase()
 	}
+
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+
+	collectors.Init()
+	processors.Init()
+	receivers.Init()
+	streams.Init()
 
 	return
 }

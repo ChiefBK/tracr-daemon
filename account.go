@@ -5,6 +5,7 @@ import (
 	"log"
 	"poloniex-go-api"
 	"time"
+	"goku-bot/store"
 )
 
 var TradeHistorySynced = make(chan bool)             // 'true' is sent to channel if trades have been updated
@@ -12,11 +13,11 @@ var DepositWithdrawalHistorySynced = make(chan bool) // 'true' is sent to channe
 
 type AccountSteward struct {
 	Poloniex *poloniex_go_api.Poloniex
-	Store    Store
+	Store    store.Store
 }
 
 func NewAccountSteward() (*AccountSteward, error) {
-	store, err := NewMgoStore()
+	store, err := store.NewStore()
 
 	if err != nil {
 		return nil, errors.New("there was an error creating the store")
@@ -69,25 +70,7 @@ func (self *AccountSteward) SyncBalances() {
 }
 
 func (self *AccountSteward) SyncTradeHistory() {
-	response := self.Poloniex.ReturnMyTradeHistory()
 
-	if response.Err != nil {
-		log.Printf("there was an error getting my Poloniex trade history - stopping sync : %s", response.Err)
-		return
-	}
-
-	data := response.Data
-
-	for pair, trades := range data {
-		self.Store.ReplaceTrades("poloniex", pair, trades)
-	}
-
-	select {
-	case TradeHistorySynced <- true:
-	case <-time.After(3 * time.Second):
-	}
-
-	log.Printf("Trades synced")
 }
 
 func (self *AccountSteward) SyncDepositWithdrawlHistory() {

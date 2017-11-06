@@ -1,6 +1,8 @@
 package goku_bot
 
-func Avg(arr []*CandleSlice) float64 {
+import "goku-bot/store"
+
+func Avg(arr []*store.CandleSlice) float64 {
 	var sum float64 = 0
 
 	for _, element := range arr {

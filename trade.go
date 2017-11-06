@@ -6,13 +6,12 @@ import (
 	"poloniex-go-api"
 	"sort"
 	"time"
-	"log"
-	"encoding/json"
 	"math"
+	"goku-bot/store"
 )
 
 type TradeSteward struct {
-	Store Store
+	Store store.Store
 }
 
 type Position struct {
@@ -25,7 +24,7 @@ type Position struct {
 }
 
 func NewTradeStewared() (*TradeSteward, error) {
-	store, err := NewMgoStore()
+	store, err := store.NewStore()
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("There was an error connecting to the store: %s", err))
@@ -136,9 +135,6 @@ func net(open, close Position) (netUsd, netPercentage float64) {
 
 func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (closedPositions []PositionResult) {
 	positions := self.GetPositions(exchange, pair)
-	jsonPositions, _ := json.Marshal(positions)
-
-	log.Printf("positions : %s", jsonPositions)
 
 	var sellPositionStack *PositionStack = new(PositionStack)
 	var buyPositionStack *PositionStack = new(PositionStack)
@@ -150,8 +146,6 @@ func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (cl
 			sellPositionStack.push(position)
 		}
 	}
-	log.Printf("buyPositionStack : %s", buyPositionStack)
-	log.Printf("sellPositionStack : %s", sellPositionStack)
 
 	for buyPositionStack.len() > 0 && sellPositionStack.len() > 0 { // while both stacks still have one or more elements
 		buyPosition := buyPositionStack.peek()
@@ -196,7 +190,6 @@ func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (cl
 				})
 			closePositionStack.pop()
 			openPositionStack.pop()
-			log.Printf("popped both")
 		} else if popOpenPosition {
 			netUsd, netPercentage := net(*openPosition, *closePosition)
 			closedPositions = append(closedPositions,
@@ -209,7 +202,6 @@ func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (cl
 				})
 			closePosition.Amount = amountLeft
 			openPositionStack.pop()
-			log.Printf("popped open")
 		} else {
 			netUsd, netPercentage := net(*openPosition, *closePosition)
 			closedPositions = append(closedPositions,
@@ -222,7 +214,6 @@ func (self *TradeSteward) CalculatePositionNetProfits(exchange, pair string) (cl
 				})
 			openPosition.Amount = amountLeft
 			closePositionStack.pop()
-			log.Printf("popped close")
 		}
 	}
 

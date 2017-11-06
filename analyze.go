@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"time"
+	"goku-bot/store"
 )
 
 type position string
@@ -33,7 +34,7 @@ func (aq *ActionQueue) pop() *Action {
 }
 
 type Indicator struct {
-	Store    *MgoStore
+	Store    *store.MgoStore
 	Exchange string
 	Pair     string
 	Interval int
@@ -60,10 +61,10 @@ func NewIndicator() (indicator *Indicator) {
 	return
 }
 
-func CalculateSimpleMovingAverage(periods int, slices []*CandleSlice) {
+func CalculateSimpleMovingAverage(periods int, slices []*store.CandleSlice) {
 	p := strconv.Itoa(periods)
 
-	var window []*CandleSlice
+	var window []*store.CandleSlice
 	for _, slice := range slices {
 		window = append(window, slice)
 
@@ -81,7 +82,7 @@ func CalculateSimpleMovingAverage(periods int, slices []*CandleSlice) {
 	}
 }
 
-func CalculateExponentialMovingAverage(periods int, slices []*CandleSlice) {
+func CalculateExponentialMovingAverage(periods int, slices []*store.CandleSlice) {
 	p := strconv.Itoa(periods)
 	log.Printf("Calculating EMA - %s", p)
 	multiplier := float64(2) / (float64(periods) + float64(1))
@@ -111,7 +112,7 @@ func CalculateNextEma(current, last, multiplier float64) float64 {
 	return (current-last)*multiplier + last
 }
 
-func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
+func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*store.CandleSlice) {
 	macdParams := fmt.Sprintf("%d-%d-%d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	fastP := strconv.Itoa(fastEmaPeriods)
 	slowP := strconv.Itoa(slowEmaPeriods)
@@ -129,17 +130,17 @@ func CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices
 
 		macd := *fastValue - *slowValue
 
-		slice.Macd[macdParams] = &MacdValue{
+		slice.Macd[macdParams] = &store.MacdValue{
 			Macd: &macd,
 		}
 	}
 }
 
-func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
+func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*store.CandleSlice) {
 	macdParams := fmt.Sprintf("%d-%d-%d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	multiplier := float64(2) / (float64(signalPeriods) + float64(1))
 
-	var window []*CandleSlice
+	var window []*store.CandleSlice
 	for _, slice := range slices {
 		macd := slice.Macd[macdParams]
 
@@ -187,17 +188,17 @@ func CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods int, 
 	}
 }
 
-func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*CandleSlice) {
+func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, slices []*store.CandleSlice) {
 	log.Printf("Calculating MACD - %d, %d, %d", fastEmaPeriods, slowEmaPeriods, signalPeriods)
 	CalculateMacdLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
 	CalculateMacdSignalLine(fastEmaPeriods, slowEmaPeriods, signalPeriods, slices)
 }
 
-func CalculateAroon(periods int, slices []*CandleSlice) {
+func CalculateAroon(periods int, slices []*store.CandleSlice) {
 	log.Printf("Calculating AROON - %d", periods)
 	p := strconv.Itoa(periods)
 
-	var window []*CandleSlice
+	var window []*store.CandleSlice
 	for _, slice := range slices {
 		window = append(window, slice)
 
@@ -214,14 +215,14 @@ func CalculateAroon(periods int, slices []*CandleSlice) {
 		up := int(((float64(periods) - float64(high)) / float64(periods)) * 100)
 		down := int(((float64(periods) - float64(low)) / float64(periods)) * 100)
 
-		slice.Aroon[p] = &AroonValue{
+		slice.Aroon[p] = &store.AroonValue{
 			Up:   &up,
 			Down: &down,
 		}
 	}
 }
 
-func DaysSinceLastHighLow(window []*CandleSlice) (high, low int) {
+func DaysSinceLastHighLow(window []*store.CandleSlice) (high, low int) {
 	high = 0
 	low = 0
 

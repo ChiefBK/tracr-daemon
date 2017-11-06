@@ -1,5 +1,7 @@
 package goku_bot
 
+import "goku-bot/store"
+
 //type Position struct {
 //	Type string // 'LONG' or 'SHORT'
 //	Door string // 'OPEN' or 'CLOSED'
@@ -18,10 +20,10 @@ type Bot struct {
 	Exchange string
 	Pair     string
 	Position *Position
-	Strategy func(exchange, pair string, indicator *Indicator, store *MgoStore) (actionQueue ActionQueue, err error)
+	Strategy func(exchange, pair string, indicator *Indicator, store store.Store) (actionQueue ActionQueue, err error)
 }
 
-func NewBot(name, exchange, pair string, strategy func(exchange, pair string, indicator *Indicator, store *MgoStore) (actionQueue ActionQueue, err error)) (bot *Bot) {
+func NewBot(name, exchange, pair string, strategy func(exchange, pair string, indicator *Indicator, store store.Store) (actionQueue ActionQueue, err error)) (bot *Bot) {
 	bot = new(Bot)
 	bot.Strategy = strategy
 	bot.Exchange = exchange
@@ -35,7 +37,7 @@ func (b *Bot) RunStrategy(queueCh chan ActionQueue, errCh chan error) {
 	defer close(queueCh)
 	defer close(errCh)
 
-	store, err := NewMgoStore()
+	store, err := store.NewStore()
 
 	if err != nil {
 		errCh <- err
