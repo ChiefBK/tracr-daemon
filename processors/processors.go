@@ -18,6 +18,9 @@ func Init() {
 
 	obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
 	processors[obr.Key()] = obr
+
+	tp := NewTickerProcessor("poloniex", "USDT_BTC")
+	processors[tp.Key()] = tp
 }
 
 func StartProcessingCollectors() {

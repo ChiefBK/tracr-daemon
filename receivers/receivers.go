@@ -30,6 +30,10 @@ func Init() {
 
 	obr := NewOrderBookReceiver("poloniex", "USDT_BTC")
 	receivers[obr.Key()] = obr
+
+	tr := NewTickerReceiver("poloniex", "USDT_BTC")
+	receivers[tr.Key()] = tr
+
 }
 
 func Start() error {

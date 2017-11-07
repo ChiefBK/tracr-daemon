@@ -97,7 +97,7 @@ const (
 //	//Candles []*Poloniex_Go_Api.Candle
 //}
 
-//type Exchange struct {
+//type exchange struct {
 //	Poloniex *poloniex_go_api.Poloniex
 //}
 

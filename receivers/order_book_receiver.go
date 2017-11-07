@@ -12,8 +12,8 @@ import (
 )
 
 type OrderBookReceiver struct {
-	Exchange  string
-	Pair      string
+	exchange  string
+	pair      string
 	orderBook *goku_bot.OrderBook
 }
 
@@ -26,7 +26,7 @@ func NewOrderBookReceiver(exchange, pair string) *OrderBookReceiver {
 }
 
 func (self *OrderBookReceiver) Key() string {
-	return fmt.Sprintf("%s-OrderBook-%s", self.Exchange, self.Pair)
+	return fmt.Sprintf("%s-OrderBook-%s", self.exchange, self.pair)
 }
 
 func (self *OrderBookReceiver) Start() {
@@ -41,7 +41,7 @@ func (self *OrderBookReceiver) Start() {
 
 	defer connection.Close()
 
-	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.Pair + "\"}")
+	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.pair + "\"}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
 		log.WithFields(log.Fields{"key": self.Key(), "module": "receivers", "error": err}).Error("there was an error writing command")
@@ -79,7 +79,7 @@ func (self *OrderBookReceiver) Start() {
 			for k, v := range ob["orderBook"].([]interface{})[0].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := goku_bot.OrderBookEntry{self.Pair, seq, price, value}
+				entry := goku_bot.OrderBookEntry{self.pair, seq, price, value}
 
 				asks = append(asks, entry)
 			}
@@ -89,7 +89,7 @@ func (self *OrderBookReceiver) Start() {
 			for k, v := range ob["orderBook"].([]interface{})[1].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := goku_bot.OrderBookEntry{self.Pair, seq, price, value}
+				entry := goku_bot.OrderBookEntry{self.pair, seq, price, value}
 
 				bids = append(bids, entry)
 			}
@@ -118,7 +118,7 @@ func (self *OrderBookReceiver) Start() {
 				index++
 				amount, _ := strconv.ParseFloat(change[index].(string), 64)
 
-				entry := goku_bot.OrderBookEntry{self.Pair, seq, price, amount}
+				entry := goku_bot.OrderBookEntry{self.pair, seq, price, amount}
 
 				if isAsk {
 					asks = append(asks, entry)

@@ -41,8 +41,12 @@ func main() {
 	go processors.StartProcessingCollectors()
 	go processors.StartProcessingReceivers()
 	go receivers.Start()
+	go streams.Start()
 
 	orderBook := streams.ReadOrderBookStream("poloniex", "USDT_BTC")
+	log.Printf("Read order book stream")
+	ticker := streams.ReadTickerStream("poloniex", "USDT_BTC")
+	log.Printf("Read ticker stream")
 
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Warn("There was an error Marshalling orderbook")
@@ -50,6 +54,7 @@ func main() {
 
 	//log.Printf("OrderBook: %s", ob)
 	log.Printf("OrderBook2: %s", orderBook)
+	log.Printf("ticker: %s", ticker)
 
 	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
 	//tickerSteward := goku_bot.NewTickerSteward()
@@ -123,6 +128,14 @@ func initialize() (err error) {
 	}
 
 	log.SetOutput(os.Stdout)
+	log.SetFormatter(&log.JSONFormatter{
+		   	FieldMap: log.FieldMap{
+		 		 log.FieldKeyTime: "@timestamp",
+		 		 log.FieldKeyLevel: "@level",
+		 		 log.FieldKeyMsg: "@message",
+
+		    },
+	})
 	log.SetLevel(log.DebugLevel)
 
 	collectors.Init()

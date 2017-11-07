@@ -1,37 +1,26 @@
-package goku_bot
+package receivers
 
 import (
-	"log"
-	"strconv"
-	"time"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"encoding/json"
 	"bytes"
+	"strconv"
+	"time"
+	"goku-bot"
 )
 
-type Ticker struct {
-	CurrencyPair       string
-	Last               float64
-	LowestAsk          float64
-	HighestBid         float64
-	PercentChange      float64
-	BaseVolume         float64
-	QuoteVolume        float64
-	IsFrozen           bool
-	TwentyFourHourHigh float64
-	TwentyFourHourLow  float64
-	Updated            time.Time
+type TickerReceiver struct {
+	exchange string
+	pair     string
 }
 
-var TickerUsdtBtc = make(chan Ticker)
-
-type TickerSteward struct{}
-
-func NewTickerSteward() *TickerSteward {
-	return &TickerSteward{}
+func NewTickerReceiver(exchange, pair string) *TickerReceiver {
+	return &TickerReceiver{exchange, pair}
 }
 
-func (self *TickerSteward) ConnectPoloniexTicker() {
+func (self *TickerReceiver) Start() {
 	address := "api2.poloniex.com:443"
 
 	connection, err := websocketConnect(address, 5)
@@ -89,7 +78,7 @@ func (self *TickerSteward) ConnectPoloniexTicker() {
 
 		// Update Ticker
 		now := time.Now()
-		newTicker := new(Ticker)
+		newTicker := new(goku_bot.Ticker)
 		newTicker.CurrencyPair = "USDT_BTC"
 		newTicker.Last = last
 		newTicker.LowestAsk = lowestAsk
@@ -102,11 +91,12 @@ func (self *TickerSteward) ConnectPoloniexTicker() {
 		newTicker.TwentyFourHourLow = twentyFourHourLow
 		newTicker.Updated = now
 
-		select {
-		case TickerUsdtBtc <- *newTicker:
-		case <-time.After(1 * time.Second):
-		}
+		log.WithFields(log.Fields{"key": self.Key(), "module": "receivers"}).Debug("recieved ticker update")
 
-		log.Printf("Ticker USDT_BTC updated")
+		sendToProcessor(self.Key(), newTicker)
 	}
+}
+
+func (self *TickerReceiver) Key() string {
+	return fmt.Sprintf("%s-Ticker-%s", self.exchange, self.pair)
 }
