@@ -2,12 +2,31 @@ package strategies
 
 import (
 	"goku-bot"
-	"log"
-	"goku-bot/store"
+	log "github.com/sirupsen/logrus"
 )
 
-func Strategy1(pair, exchange string, indicator *goku_bot.Indicator, store store.Store) (actionQueue goku_bot.ActionQueue, err error) {
-	log.Println("Running Strategy 1")
+type Strategy struct {
+	decisionTrees []*DecisionTree
+}
 
-	return
+func NewStategy(trees []*DecisionTree) *Strategy {
+	return &Strategy{trees}
+}
+
+func (self *Strategy) run(botActionChan chan<- *goku_bot.ActionQueue) {
+	log.WithFields(log.Fields{"module": "strategies"}).Debug("running strategy")
+	botActionQueue := goku_bot.NewActionQueue() // the queue that will be sent back to the bot
+
+	for _, tree := range self.decisionTrees {
+		treeActionChan := make(chan *goku_bot.ActionQueue)
+		go tree.run(treeActionChan)
+
+		treeActionQueue := <- treeActionChan // gets actions from tree
+
+		for _, action := range treeActionQueue.Queue { // add actions from tree action queue to bot action queue
+			botActionQueue.Push(action)
+		}
+	}
+
+	botActionChan <- botActionQueue
 }

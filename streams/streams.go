@@ -28,8 +28,14 @@ func Start() {
 	}
 }
 
-func BroadcastStream(key string, value interface{}) {
-	streams[key] <- value
+func broadcastStreams() {
+	log.WithFields(log.Fields{"module": "streams", "numOfValues": len(values)}).Debug("broadcasting streams")
+	for key, value := range values {
+		select {
+		case streams[key] <- value:
+		case <-time.After(1 * time.Nanosecond):
+		}
+	}
 }
 
 func BroadcastOrderBook(key string, value goku_bot.OrderBook) {
@@ -42,23 +48,7 @@ func BroadcastTicker(key string, value goku_bot.Ticker) {
 	values[key] = value
 }
 
-func broadcastStreams() {
-	log.WithFields(log.Fields{"module": "streams", "numOfValues": len(values)}).Debug("broadcasting streams")
-	for key, value := range values {
-		select {
-		case streams[key] <- value:
-		case <-time.After(1 * time.Nanosecond):
-		}
-	}
-}
-
-func ReadStream(key string) interface{} {
-	value := <-streams[key]
-
-	return value
-}
-
-func ReadOrderBookStream(exchange, pair string) goku_bot.OrderBook {
+func ReadOrderBook(exchange, pair string) goku_bot.OrderBook {
 	log.WithFields(log.Fields{"exchange": exchange, "pair": pair, "module": "streams"}).Debug("reading order book")
 	key := fmt.Sprintf("%s-OrderBook-%s", exchange, pair)
 
@@ -68,7 +58,7 @@ func ReadOrderBookStream(exchange, pair string) goku_bot.OrderBook {
 	return orderBook
 }
 
-func ReadTickerStream(exchange, pair string) goku_bot.Ticker {
+func ReadTicker(exchange, pair string) goku_bot.Ticker {
 	log.WithFields(log.Fields{"exchange": exchange, "pair": pair, "module": "streams"}).Debug("reading ticker stream")
 	key := fmt.Sprintf("%s-Ticker-%s", exchange, pair)
 

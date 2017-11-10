@@ -10,29 +10,6 @@ import (
 
 type position string
 
-type Action struct {
-	Position string
-}
-
-type ActionQueue struct {
-	queue []*Action
-}
-
-func (aq *ActionQueue) push(action *Action) {
-	aq.queue = append(aq.queue, action)
-}
-
-func (aq *ActionQueue) pop() *Action {
-	if len(aq.queue) < 1 {
-		return nil
-	}
-
-	action := aq.queue[0]
-	aq.queue = aq.queue[1:]
-
-	return action
-}
-
 type Indicator struct {
 	Store    *store.MgoStore
 	Exchange string

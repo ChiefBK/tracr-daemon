@@ -6,7 +6,6 @@ import (
 	"goku-bot"
 	"time"
 
-	. "goku-bot/global"
 	log "github.com/sirupsen/logrus"
 	"goku-bot/strategies"
 	"os"
@@ -43,9 +42,9 @@ func main() {
 	go receivers.Start()
 	go streams.Start()
 
-	orderBook := streams.ReadOrderBookStream("poloniex", "USDT_BTC")
+	orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
 	log.Printf("Read order book stream")
-	ticker := streams.ReadTickerStream("poloniex", "USDT_BTC")
+	ticker := streams.ReadTicker("poloniex", "USDT_BTC")
 	log.Printf("Read ticker stream")
 
 	if err != nil {
@@ -55,6 +54,8 @@ func main() {
 	//log.Printf("OrderBook: %s", ob)
 	log.Printf("OrderBook2: %s", orderBook)
 	log.Printf("ticker: %s", ticker)
+
+	go strategies.Start()
 
 	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
 	//tickerSteward := goku_bot.NewTickerSteward()
@@ -129,12 +130,11 @@ func initialize() (err error) {
 
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{
-		   	FieldMap: log.FieldMap{
-		 		 log.FieldKeyTime: "@timestamp",
-		 		 log.FieldKeyLevel: "@level",
-		 		 log.FieldKeyMsg: "@message",
-
-		    },
+		FieldMap: log.FieldMap{
+			log.FieldKeyTime:  "@timestamp",
+			log.FieldKeyLevel: "@level",
+			log.FieldKeyMsg:   "@message",
+		},
 	})
 	log.SetLevel(log.DebugLevel)
 
@@ -142,6 +142,7 @@ func initialize() (err error) {
 	processors.Init()
 	receivers.Init()
 	streams.Init()
+	strategies.Init()
 
 	return
 }
@@ -194,8 +195,8 @@ func runAnalyze() {
 	bot1ActionQueueCh := make(chan goku_bot.ActionQueue)
 	bot1ErrorCh := make(chan error)
 
-	bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
-	go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
+	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
+	//go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
 
 	<-bot1ActionQueueCh
 	<-bot1ErrorCh
