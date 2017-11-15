@@ -1,23 +1,24 @@
 package strategies
 
 import (
-	"goku-bot"
 	log "github.com/sirupsen/logrus"
+	"goku-bot/strategies/actions"
 )
 
 type DecisionTree struct {
-	root *Signal
+	root     *Signal
+	position Position
 }
 
-func NewDecisionTree(rootSignal *Signal) *DecisionTree {
-	return &DecisionTree{rootSignal}
+func newDecisionTree(rootSignal *Signal, position Position) *DecisionTree {
+	return &DecisionTree{rootSignal, position}
 }
 
-func (self *DecisionTree) run(actionQueueChan chan<- *goku_bot.ActionQueue) {
+func (self *DecisionTree) run(actionQueueChan chan<- *actions.ActionQueue) {
 	log.WithFields(log.Fields{"module": "strategies"}).Debug("running tree")
 
-	signalActionChan := make(chan *goku_bot.Action)
-	actionQueue := goku_bot.NewActionQueue()
+	signalActionChan := make(chan *actions.Action)
+	actionQueue := actions.NewActionQueue()
 
 	go self.root.run(signalActionChan) // runs root signal of tree
 
@@ -26,4 +27,22 @@ func (self *DecisionTree) run(actionQueueChan chan<- *goku_bot.ActionQueue) {
 	}
 
 	actionQueueChan <- actionQueue // Sends queue of actions to Strategy
+}
+
+func BuildDecisionChain(position Position, signals ...*Signal) *DecisionTree {
+	var rootSignal *Signal
+	var refSignal *Signal
+
+	for _, signal := range signals {
+		if rootSignal == nil { // if root signal
+			rootSignal = signal
+			refSignal = signal
+			continue
+		}
+
+		refSignal.addChild(signal)
+		refSignal = signal
+	}
+
+	return newDecisionTree(rootSignal, position)
 }

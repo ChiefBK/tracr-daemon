@@ -15,6 +15,8 @@ import (
 	"goku-bot/processors"
 	"goku-bot/streams"
 	"goku-bot/receivers"
+	"goku-bot/strategies/actions"
+	"goku-bot/executors"
 )
 
 var (
@@ -41,6 +43,7 @@ func main() {
 	go processors.StartProcessingReceivers()
 	go receivers.Start()
 	go streams.Start()
+	go executors.Start()
 
 	orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
 	log.Printf("Read order book stream")
@@ -192,7 +195,7 @@ func runCandles() {
 func runAnalyze() {
 	log.Println("Starting Analyze")
 
-	bot1ActionQueueCh := make(chan goku_bot.ActionQueue)
+	bot1ActionQueueCh := make(chan actions.ActionQueue)
 	bot1ErrorCh := make(chan error)
 
 	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)

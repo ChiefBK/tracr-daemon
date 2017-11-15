@@ -1,33 +1,22 @@
 package strategies
 
 import (
-	"goku-bot"
 	log "github.com/sirupsen/logrus"
+	"goku-bot/strategies/conditions"
+	"goku-bot/strategies/actions"
 )
-
 
 var bots []*Bot
 
 func Init() {
 	log.WithFields(log.Fields{"module": "strategies"}).Info("Initializing strategies module")
-	bot1 := NewBot("bot1", "poloniex", "USDT_BTC")
+	log.WithFields(log.Fields{"module": "strategies"}).Debug("Creating bots")
 
-	rootSignal := NewSignal(func() bool {
-		return true
-	}, nil, true)
-	leafSignal := NewSignal(func() bool {
-		return true
-	}, goku_bot.NewAction("leaf action", "Action stuffs"), false)
-	rootSignal.addChild(leafSignal)
+	rootSignal := NewSignal(conditions.TrueFunction(), nil, true)
+	leafSignal := NewSignal(conditions.TrueFunction(), actions.ShortPositionAction(), false)
+	tree := BuildDecisionChain(CLOSED_POSITION, rootSignal, leafSignal)
+	addBot("bot1", "poloniex", "USDT_BTC", nil, tree)
 
-	tree := NewDecisionTree(rootSignal)
-	var trees []*DecisionTree
-	trees = append(trees, tree)
-
-	strat := NewStategy(trees)
-	bot1.addStrategy(CLOSED_POSITION, strat)
-
-	bots = append(bots, bot1)
 }
 
 func Start() {
