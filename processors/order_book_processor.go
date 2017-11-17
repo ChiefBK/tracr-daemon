@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"goku-bot/streams"
 	"goku-bot"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type OrderBookProcessor struct {
@@ -17,7 +17,7 @@ func NewOrderBookProcessor(exchange, pair string) *OrderBookProcessor {
 }
 
 func (self *OrderBookProcessor) Process(input interface{}) {
-	log.WithFields(log.Fields{"key": self.Key(), "module": "processors"}).Debug("processing")
+	log.Debug("processing", "key", self.Key(), "module", "processors")
 	orderBook := input.(*goku_bot.OrderBook)
 	streams.BroadcastOrderBook(self.Key(), *orderBook)
 }

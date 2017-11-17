@@ -2,7 +2,7 @@ package collectors
 
 import (
 	"poloniex-go-api"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type MyTradeHistoryCollector struct {
@@ -20,11 +20,11 @@ func (self *MyTradeHistoryCollector) Key() string {
 }
 
 func (self *MyTradeHistoryCollector) Collect() {
-	log.WithFields(log.Fields{"key": self.Key(), "module": "collectors"}).Debug("Collecting")
+	log.Debug("Collecting", "module", "collectors", "key", self.Key())
 	response := self.Poloniex.ReturnMyTradeHistory()
 
 	if response.Err != nil {
-		log.WithFields(log.Fields{"key": self.Key(), "module": "collectors", "error": response.Err}).Warn("Error collecting")
+		log.Warn("Error collecting", "module", "collectors", "key", self.Key(), "error", response.Err)
 		return
 	}
 

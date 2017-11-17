@@ -1,7 +1,7 @@
 package processors
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/channels"
 )
 
@@ -24,19 +24,20 @@ func Init() {
 }
 
 func StartProcessingCollectors() {
-	log.WithFields(log.Fields{"module": "processors"}).Info("ready to process collector data")
+	log.Info("ready to process collector data", "module", "processors")
 	for {
 		input := <-channels.CollectorProcessorChan
-		log.WithFields(log.Fields{"key": input.Key, "module": "processors"}).Debug("sending to processor")
+		log.Debug("sending to processor", "module", "processors", "key", input.Key)
 		go processors[input.Key].Process(input.Output)
 	}
 }
 
 func StartProcessingReceivers() {
-	log.WithFields(log.Fields{"module": "processors"}).Info("ready to process receiver data")
+	log.Info("ready to process receiver data", "module", "processors")
+
 	for {
 		input := <-channels.ReceiverProcessorChan
-		log.WithFields(log.Fields{"key": input.Key, "module": "processors"}).Debug("sending to processor")
+		log.Debug("sending to processor", "module", "processors", "key", input.Key)
 		go processors[input.Key].Process(input.Output)
 	}
 }

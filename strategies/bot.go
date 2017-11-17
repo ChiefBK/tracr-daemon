@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies/actions"
 	"goku-bot/broker"
 	"goku-bot/executors/responses"
@@ -85,19 +85,21 @@ func NewBot(key, exchange, pair string) (bot *Bot) {
 }
 
 func (self *Bot) start() {
-	log.WithFields(log.Fields{"bot": self.key, "module": "strategies"}).Info("Starting bot")
+	log.Info("Starting bot", "botKey", self.key, "module", "strategies")
 	var signalActionChan = make(chan *actions.ActionQueue)
 	self.runStrategy(signalActionChan)
 
 	signalActionQueue := <-signalActionChan
 
 	botActionQueue := actions.NewActionQueue()
-	log.WithFields(log.Fields{"bot": self.key, "module": "strategies", "actionLen": signalActionQueue.Length()}).Debug("received actions from strategy")
+	log.Debug("received actions from strategy", "botKey", self.key, "module", "strategies", "actionLen", signalActionQueue.Length())
+
 
 	action := signalActionQueue.Dequeue()
 
 	for action != nil {
-		log.WithFields(log.Fields{"bot": self.key, "module": "strategies", "action": action}).Debug("processing action from strategy")
+		log.Debug("processing action from strategy", "botKey", self.key, "module", "strategies", "action", action)
+
 		//return
 		if action.Consumer == actions.BOT {
 			// handle internal action
@@ -120,7 +122,7 @@ func (self *Bot) start() {
 	broker.SendToExecutor(self.key, *botActionQueue)
 	executorResponse := <-responseChannel
 
-	log.WithFields(log.Fields{"bot": self.key, "module": "strategies", "response": executorResponse}).Debug("Received executor response")
+	log.Debug("Received executor response", "botKey", self.key, "module", "strategies", "response", executorResponse)
 }
 
 func (self *Bot) addStrategy(pos Position, strategy *Strategy) {

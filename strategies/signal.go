@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies/actions"
 )
 
@@ -22,12 +22,12 @@ func (self *Signal) addChild(signal *Signal) {
 }
 
 func (self *Signal) run(actionChan chan<- *actions.Action) {
-	log.WithFields(log.Fields{"module": "strategies", "children": len(self.children), "isRoot": self.isRoot}).Debug("running signal")
+	log.Debug("running signal", "module", "strategies", "children", len(self.children), "isRoot", self.isRoot)
 	result := self.condition()
 
 	if result { // if signal is true
 		if len(self.children) == 0 && self.action != nil { // if leaf node
-			log.WithFields(log.Fields{"module": "strategies"}).Debug("sending action from signal")
+			log.Debug("sending action from signal", "module", "strategies", "action", self.action)
 			actionChan <- self.action // send action to tree
 		}
 

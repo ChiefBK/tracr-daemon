@@ -8,7 +8,7 @@ import (
 	"sync"
 	"fmt"
 	"goku-bot"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type OrderBookReceiver struct {
@@ -35,7 +35,7 @@ func (self *OrderBookReceiver) Start() {
 	connection, err := websocketConnect(address, 5)
 
 	if err != nil {
-		log.WithFields(log.Fields{"key": self.Key(), "module": "receivers", "error": err}).Error("could not connect to Poloniex Order book")
+		log.Error("could not connect to Poloniex Order book", "key", self.Key(), "module", "receivers", "error", err)
 		return
 	}
 
@@ -44,7 +44,8 @@ func (self *OrderBookReceiver) Start() {
 	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.pair + "\"}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
-		log.WithFields(log.Fields{"key": self.Key(), "module": "receivers", "error": err}).Error("there was an error writing command")
+		log.Error("there was an error writing command", "key", self.Key(), "module", "receivers", "error", err)
+
 		return
 	}
 
@@ -52,7 +53,7 @@ func (self *OrderBookReceiver) Start() {
 	for {
 		_, message, err := connection.ReadMessage()
 		if err != nil {
-			log.WithFields(log.Fields{"key": self.Key(), "module": "receivers", "error": err}).Warn("there was an error reading message")
+			log.Warn("there was an error reading message", "key", self.Key(), "module", "receivers", "error", err)
 			return
 		}
 		dec := json.NewDecoder(bytes.NewReader(message))
@@ -62,7 +63,7 @@ func (self *OrderBookReceiver) Start() {
 		// decode an array value (Message)
 		err = dec.Decode(&m)
 		if err != nil {
-			log.WithFields(log.Fields{"key": self.Key(), "module": "receivers", "error": err}).Warn("error decoding poloniex order book message")
+			log.Warn("error decoding poloniex order book message", "key", self.Key(), "module", "receivers", "error", err)
 		}
 
 		if len(m.([]interface{})) <= 1 {
@@ -95,7 +96,7 @@ func (self *OrderBookReceiver) Start() {
 			}
 			self.syncBids(bids)
 			isFirst = false
-			log.WithFields(log.Fields{"key": self.Key(), "module": "receivers"}).Info("initial sync of full order book complete")
+			log.Info("initial sync of full order book complete", "key", self.Key(), "module", "receivers")
 		} else { // if a set of changes
 			changes := m.([]interface{})[2].([]interface{})
 
@@ -129,7 +130,7 @@ func (self *OrderBookReceiver) Start() {
 
 			self.syncBids(bids)
 			self.syncAsks(asks)
-			log.WithFields(log.Fields{"key": self.Key(), "module": "receivers"}).Debug("recieved Orderbook update")
+			log.Debug("received Orderbook update", "key", self.Key(), "module", "receivers")
 		}
 
 		self.broadcastOrderBook()

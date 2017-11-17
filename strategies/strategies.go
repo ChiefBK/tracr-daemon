@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies/conditions"
 	"goku-bot/strategies/actions"
 )
@@ -9,8 +9,8 @@ import (
 var bots []*Bot
 
 func Init() {
-	log.WithFields(log.Fields{"module": "strategies"}).Info("Initializing strategies module")
-	log.WithFields(log.Fields{"module": "strategies"}).Debug("Creating bots")
+	log.Info("Initializing strategies module", "module", "strategies")
+	log.Debug("Creating bots", "module", "strategies")
 
 	rootSignal := NewSignal(conditions.TrueFunction(), nil, true)
 	leafSignal := NewSignal(conditions.TrueFunction(), actions.ShortPositionAction(), false)
@@ -20,7 +20,7 @@ func Init() {
 }
 
 func Start() {
-	log.WithFields(log.Fields{"module": "strategies"}).Info("Starting strategies module")
+	log.Info("Starting strategies module", "module", "strategies")
 	for _, bot := range bots {
 		go bot.start()
 	}

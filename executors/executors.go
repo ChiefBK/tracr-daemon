@@ -4,7 +4,7 @@ import (
 	"goku-bot/strategies/actions"
 	. "goku-bot/strategies/actions"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/executors/responses"
 	"goku-bot/broker"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 // TODO - create third action receiver / sender module to link executors module with strategies module
 func processActions(botKey string, actions actions.ActionQueue) {
-	log.WithFields(log.Fields{"module": "executors", "botKey": botKey, "actionLen": actions.Length()}).Debug("executor processing actions")
+	log.Debug("executor processing actions", "module", "executors", "botKey", botKey)
 
 	action := actions.Dequeue()
 	for action != nil { // While actions is still contains actions
@@ -63,7 +63,7 @@ func Start() {
 }
 
 func monitorActionChannel(botKey string, channel broker.ActionReceiverChannel) {
-	log.WithFields(log.Fields{"module": "executors", "botKey": botKey}).Debug("starting action channel for bot")
+	log.Debug("starting action channel for bot", "module", "executors", "botKey", botKey)
 	for {
 		actionQueue := <-channel
 		processActions(botKey, actionQueue)

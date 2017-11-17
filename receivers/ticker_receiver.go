@@ -2,7 +2,7 @@ package receivers
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"github.com/gorilla/websocket"
 	"encoding/json"
 	"bytes"
@@ -26,7 +26,8 @@ func (self *TickerReceiver) Start() {
 	connection, err := websocketConnect(address, 5)
 
 	if err != nil {
-		log.Printf("Could not connect to Poloniex Ticker: %s", err)
+		log.Error("Could not connect to Poloniex Ticker", "module", "receivers", "error", err, "key", self.Key())
+		return
 	}
 
 	defer connection.Close()
@@ -34,15 +35,14 @@ func (self *TickerReceiver) Start() {
 	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : 1002}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
-		log.Printf("there was an error writing command: %s", err)
+		log.Error("there was an error writing command", "module", "receivers", "error", err, "key", self.Key())
 		return
 	}
 
 	for {
 		_, message, err := connection.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
-			return
+			log.Warn("there was an error reading message", "module", "receivers", "error", err, "key", self.Key())
 		}
 		dec := json.NewDecoder(bytes.NewReader(message))
 
@@ -51,7 +51,7 @@ func (self *TickerReceiver) Start() {
 		// decode an array value (Message)
 		err = dec.Decode(&m)
 		if err != nil {
-			log.Fatal(err)
+			log.Warn("there was an error decoding message", "module", "receivers", "error", err, "key", self.Key())
 		}
 
 		if len(m.([]interface{})) < 3 {
@@ -91,7 +91,8 @@ func (self *TickerReceiver) Start() {
 		newTicker.TwentyFourHourLow = twentyFourHourLow
 		newTicker.Updated = now
 
-		log.WithFields(log.Fields{"key": self.Key(), "module": "receivers"}).Debug("recieved ticker update")
+		log.Debug("received ticker update", "module", "receivers", "key", self.Key())
+
 
 		sendToProcessor(self.Key(), newTicker)
 	}

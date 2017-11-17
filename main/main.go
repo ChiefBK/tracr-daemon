@@ -3,20 +3,18 @@ package main
 import (
 	"errors"
 	"flag"
-	"goku-bot"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies"
 	"os"
-	"sync"
 	store2 "goku-bot/store"
 	"goku-bot/collectors"
 	"goku-bot/processors"
 	"goku-bot/streams"
 	"goku-bot/receivers"
-	"goku-bot/strategies/actions"
 	"goku-bot/executors"
+	"goku-bot/logging"
 )
 
 var (
@@ -30,13 +28,11 @@ func main() {
 	err := initialize()
 
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Fatal("Initialization error")
+		log.Error("Initialization error", "module", "main")
 		return
 	}
 
-	log.Info("Initialization Complete")
+	log.Info("Initialization Complete", "module", "main")
 
 	go collectors.Start()
 	go processors.StartProcessingCollectors()
@@ -45,18 +41,16 @@ func main() {
 	go streams.Start()
 	go executors.Start()
 
-	orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
-	log.Printf("Read order book stream")
-	ticker := streams.ReadTicker("poloniex", "USDT_BTC")
-	log.Printf("Read ticker stream")
+	//orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
+	//ticker := streams.ReadTicker("poloniex", "USDT_BTC")
 
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Warn("There was an error Marshalling orderbook")
+		log.Warn("There was an error Marshalling orderbook", "module", "main")
 	}
 
 	//log.Printf("OrderBook: %s", ob)
-	log.Printf("OrderBook2: %s", orderBook)
-	log.Printf("ticker: %s", ticker)
+	//log.Printf("OrderBook2: %s", orderBook)
+	//log.Printf("ticker: %s", ticker)
 
 	go strategies.Start()
 
@@ -114,7 +108,7 @@ func main() {
 }
 
 func initialize() (err error) {
-	log.Println("Initializing...")
+	log.Info("Initializing...", "module", "main")
 	clean := flag.Bool("clean", false, "Clean DB on start")
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
@@ -131,16 +125,7 @@ func initialize() (err error) {
 		err = store.DropDatabase()
 	}
 
-	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{
-		FieldMap: log.FieldMap{
-			log.FieldKeyTime:  "@timestamp",
-			log.FieldKeyLevel: "@level",
-			log.FieldKeyMsg:   "@message",
-		},
-	})
-	log.SetLevel(log.DebugLevel)
-
+	logging.Init()
 	collectors.Init()
 	processors.Init()
 	receivers.Init()
@@ -150,66 +135,66 @@ func initialize() (err error) {
 	return
 }
 
-func startGatheringAccountInfo() {
-	log.Println("Starting Account")
+//func startGatheringAccountInfo() {
+//	log.Println("Starting Account")
+//
+//	accountSteward, err := goku_bot.NewAccountSteward()
+//
+//	if err != nil {
+//		log.Printf("There was an error creating the Account Steward: %s", err)
+//		return
+//	}
+//
+//	//go accountSteward.SyncBalances()
+//	go repeatFunction(accountSteward.SyncBalances, time.Second*5)
+//	go repeatFunction(accountSteward.SyncTradeHistory, time.Second*10)
+//	go repeatFunction(accountSteward.SyncDepositWithdrawlHistory, time.Second*10)
+//}
+//
+//func runCandles() {
+//	log.Println("Starting Candles")
+//
+//	if firstMonitor.IsZero() {
+//		firstMonitor = time.Now()
+//	}
+//
+//	var group sync.WaitGroup
+//	group.Add(1)
+//
+//	candlestickSteward, err := goku_bot.NewCandleStickSteward()
+//
+//	if err != nil {
+//		log.Printf("There was an error creating the candlestick steward: %s", err)
+//		return
+//	}
+//
+//	go candlestickSteward.SyncCandles(&group)
+//
+//	group.Wait()
+//
+//	log.Println("Finished Monitor")
+//
+//	runAnalyze()
+//}
+//
+//func runAnalyze() {
+//	log.Println("Starting Analyze")
+//
+//	bot1ActionQueueCh := make(chan actions.ActionQueue)
+//	bot1ErrorCh := make(chan error)
+//
+//	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
+//	//go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
+//
+//	<-bot1ActionQueueCh
+//	<-bot1ErrorCh
+//
+//	log.Println("Finished Analyze")
+//}
 
-	accountSteward, err := goku_bot.NewAccountSteward()
-
-	if err != nil {
-		log.Printf("There was an error creating the Account Steward: %s", err)
-		return
-	}
-
-	//go accountSteward.SyncBalances()
-	go repeatFunction(accountSteward.SyncBalances, time.Second*5)
-	go repeatFunction(accountSteward.SyncTradeHistory, time.Second*10)
-	go repeatFunction(accountSteward.SyncDepositWithdrawlHistory, time.Second*10)
-}
-
-func runCandles() {
-	log.Println("Starting Candles")
-
-	if firstMonitor.IsZero() {
-		firstMonitor = time.Now()
-	}
-
-	var group sync.WaitGroup
-	group.Add(1)
-
-	candlestickSteward, err := goku_bot.NewCandleStickSteward()
-
-	if err != nil {
-		log.Printf("There was an error creating the candlestick steward: %s", err)
-		return
-	}
-
-	go candlestickSteward.SyncCandles(&group)
-
-	group.Wait()
-
-	log.Println("Finished Monitor")
-
-	runAnalyze()
-}
-
-func runAnalyze() {
-	log.Println("Starting Analyze")
-
-	bot1ActionQueueCh := make(chan actions.ActionQueue)
-	bot1ErrorCh := make(chan error)
-
-	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
-	//go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
-
-	<-bot1ActionQueueCh
-	<-bot1ErrorCh
-
-	log.Println("Finished Analyze")
-}
-
-func repeatFunction(f func(), every time.Duration) {
-	for {
-		f()
-		<-time.After(every)
-	}
-}
+//func repeatFunction(f func(), every time.Duration) {
+//	for {
+//		f()
+//		<-time.After(every)
+//	}
+//}

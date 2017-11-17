@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies/actions"
 )
 
@@ -15,7 +15,7 @@ func newDecisionTree(rootSignal *Signal, position Position) *DecisionTree {
 }
 
 func (self *DecisionTree) run(actionQueueChan chan<- *actions.ActionQueue) {
-	log.WithFields(log.Fields{"module": "strategies"}).Debug("running tree")
+	log.Debug("running tree", "module", "strategies")
 
 	signalActionChan := make(chan *actions.Action)
 	actionQueue := actions.NewActionQueue()

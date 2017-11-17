@@ -3,7 +3,7 @@ package streams
 import (
 	"goku-bot"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"time"
 )
 
@@ -29,7 +29,7 @@ func Start() {
 }
 
 func broadcastStreams() {
-	log.WithFields(log.Fields{"module": "streams", "numOfValues": len(values)}).Debug("broadcasting streams")
+	log.Debug("broadcasting streams", "module", "streams", "lenValues", len(values))
 	for key, value := range values {
 		select {
 		case streams[key] <- value:
@@ -39,17 +39,18 @@ func broadcastStreams() {
 }
 
 func BroadcastOrderBook(key string, value goku_bot.OrderBook) {
-	log.WithFields(log.Fields{"key": key, "module": "streams"}).Debug("broadcasting order book")
+	log.Debug("broadcasting order book", "module", "streams", "key", key)
 	values[key] = value
 }
 
 func BroadcastTicker(key string, value goku_bot.Ticker) {
-	log.WithFields(log.Fields{"key": key, "module": "streams"}).Debug("broadcasting ticker")
+	log.Debug("broadcasting ticker", "module", "streams", "key", key)
+
 	values[key] = value
 }
 
 func ReadOrderBook(exchange, pair string) goku_bot.OrderBook {
-	log.WithFields(log.Fields{"exchange": exchange, "pair": pair, "module": "streams"}).Debug("reading order book")
+	log.Debug("reading order book", "module", "streams", "exchange", exchange, "pair", pair)
 	key := fmt.Sprintf("%s-OrderBook-%s", exchange, pair)
 
 	streamOutput := <-streams[key]
@@ -59,7 +60,7 @@ func ReadOrderBook(exchange, pair string) goku_bot.OrderBook {
 }
 
 func ReadTicker(exchange, pair string) goku_bot.Ticker {
-	log.WithFields(log.Fields{"exchange": exchange, "pair": pair, "module": "streams"}).Debug("reading ticker stream")
+	log.Debug("reading ticker", "module", "streams", "exchange", exchange, "pair", pair)
 	key := fmt.Sprintf("%s-Ticker-%s", exchange, pair)
 
 	streamOutput := <-streams[key]

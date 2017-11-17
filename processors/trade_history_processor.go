@@ -3,7 +3,7 @@ package processors
 import (
 	"goku-bot/store"
 	"poloniex-go-api"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type MyTradeHistoryProcessor struct {
@@ -17,7 +17,7 @@ func NewMyTradeHistoryProcessor() *MyTradeHistoryProcessor {
 }
 
 func (self *MyTradeHistoryProcessor) Process(input interface{}) {
-	log.WithFields(log.Fields{"key": self.Key(), "module": "processors"}).Debug("processing")
+	log.Debug("processing", "key", self.Key(), "module", "processors")
 	data := input.(map[string][]poloniex_go_api.Trade)
 
 	for pair, trades := range data {

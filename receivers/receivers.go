@@ -7,7 +7,7 @@ import (
 	"time"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type Receiver interface {
@@ -38,7 +38,7 @@ func Init() {
 
 func Start() error {
 	for _, receiver := range receivers {
-		log.Printf("Starting %s receiver", receiver.Key())
+		log.Info("Starting receiver", "key", receiver.Key(), "module", "receivers")
 		go receiver.Start()
 	}
 
@@ -46,7 +46,8 @@ func Start() error {
 }
 
 func sendToProcessor(key string, output interface{}) {
-	log.WithFields(log.Fields{"key": key, "module": "receivers"}).Debug("sending to processor module")
+	log.Debug("sending to processor module", "key", key, "module", "receivers")
+
 	processorInput := channels.ReceiverOutputProcessorInput{output, key}
 
 	channels.ReceiverProcessorChan <- processorInput
@@ -62,7 +63,7 @@ func websocketConnect(address string, retries int) (*websocket.Conn, error) {
 		connection, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 
 		if err != nil {
-			log.WithFields(log.Fields{"module": "receivers", "error": err}).Debug("error connecting - retrying after 5 seconds")
+			log.Warn("error connecting - retrying after 5 seconds", "module", "receivers", "error", err, "retriesLeft", retriesLeft)
 			retriesLeft--
 
 			timer := time.NewTimer(time.Second * 5)

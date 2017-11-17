@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 	"goku-bot/strategies/actions"
 )
 
@@ -14,7 +14,7 @@ func NewStategy(trees []*DecisionTree) *Strategy {
 }
 
 func (self *Strategy) run(botActionChan chan<- *actions.ActionQueue) {
-	log.WithFields(log.Fields{"module": "strategies"}).Debug("running strategy")
+	log.Debug("running strategy", "module", "strategies")
 	botActionQueue := actions.NewActionQueue() // the queue that will be sent back to the bot
 
 	for _, tree := range self.decisionTrees {

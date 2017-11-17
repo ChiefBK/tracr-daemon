@@ -4,7 +4,7 @@ import (
 	"goku-bot"
 	"goku-bot/streams"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/inconshreveable/log15"
 )
 
 type TickerProcessor struct {
@@ -17,7 +17,7 @@ func NewTickerProcessor(exchange, pair string) *TickerProcessor {
 }
 
 func (self *TickerProcessor) Process(input interface{}) {
-	log.WithFields(log.Fields{"key": self.Key(), "module": "processors"}).Debug("processing")
+	log.Debug("processing", "key", self.Key(), "module", "processors")
 	ticker := input.(*goku_bot.Ticker)
 
 	streams.BroadcastTicker(self.Key(), *ticker)
