@@ -13,7 +13,6 @@ import (
 	"goku-bot/processors"
 	"goku-bot/streams"
 	"goku-bot/receivers"
-	"goku-bot/executors"
 	"goku-bot/logging"
 )
 
@@ -37,22 +36,22 @@ func main() {
 	go collectors.Start()
 	go processors.StartProcessingCollectors()
 	go processors.StartProcessingReceivers()
-	go receivers.Start()
-	go streams.Start()
-	go executors.Start()
+	//go receivers.Start()
+	//go streams.Start()
+	//go executors.Start()
 
 	//orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
 	//ticker := streams.ReadTicker("poloniex", "USDT_BTC")
 
-	if err != nil {
-		log.Warn("There was an error Marshalling orderbook", "module", "main")
-	}
+	//if err != nil {
+	//	log.Warn("There was an error Marshalling orderbook", "module", "main")
+	//}
 
 	//log.Printf("OrderBook: %s", ob)
 	//log.Printf("OrderBook2: %s", orderBook)
 	//log.Printf("ticker: %s", ticker)
 
-	go strategies.Start()
+	//go strategies.Start()
 
 	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
 	//tickerSteward := goku_bot.NewTickerSteward()

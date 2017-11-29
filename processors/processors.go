@@ -3,6 +3,7 @@ package processors
 import (
 	log "github.com/inconshreveable/log15"
 	"goku-bot/channels"
+	"goku-bot/exchanges"
 )
 
 type Processor interface {
@@ -13,14 +14,18 @@ type Processor interface {
 var processors = make(map[string]Processor)
 
 func Init() {
-	thp := NewMyTradeHistoryProcessor()
+	thp := NewMyTradeHistoryProcessor(exchanges.POLONIEX)
 	processors[thp.Key()] = thp
 
-	obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
-	processors[obr.Key()] = obr
+	//obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
+	//processors[obr.Key()] = obr
+	//
+	//tp := NewTickerProcessor("poloniex", "USDT_BTC")
+	//processors[tp.Key()] = tp
 
-	tp := NewTickerProcessor("poloniex", "USDT_BTC")
-	processors[tp.Key()] = tp
+	for key := range processors {
+		log.Debug("Initialized processor", "module", "processors", "key", key)
+	}
 }
 
 func StartProcessingCollectors() {

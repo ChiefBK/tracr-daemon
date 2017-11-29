@@ -5,12 +5,20 @@ import (
 	"gopkg.in/mgo.v2"
 	"errors"
 	"gopkg.in/mgo.v2/bson"
-	"poloniex-go-api"
+	"goku-bot/exchanges"
 )
 
 type MgoStore struct {
 	session  *mgo.Session
 	database *mgo.Database
+}
+
+func (self *MgoStore) RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*CandleSlice) {
+	panic("implement me")
+}
+
+func (self *MgoStore) SyncCandles(candles []exchanges.Candle, exchange, pair, interval string) {
+	panic("implement me")
 }
 
 func newMgoStore() (store *MgoStore, err error) {
@@ -43,7 +51,7 @@ func (self *MgoStore) EmptyCollection(name string) error {
 	return err
 }
 
-func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []poloniex_go_api.Trade) {
+func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []exchanges.Trade) {
 	name := buildMyTradeHistoryCollectionName(exchange, pair)
 
 	sortVal := ""
@@ -56,52 +64,52 @@ func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []p
 	return
 }
 
-func (self *MgoStore) InsertTrades(exchange, pair string, trades []poloniex_go_api.Trade) {
+func (self *MgoStore) InsertTrades(exchange, pair string, trades []exchanges.Trade) {
 	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
 	for _, trade := range trades {
 		self.getCollection(collectionName).Insert(trade)
 	}
 }
 
-func (self *MgoStore) ReplaceTrades(exchange, pair string, trades []poloniex_go_api.Trade) {
+func (self *MgoStore) ReplaceTrades(exchange, pair string, trades []exchanges.Trade) {
 	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
 	self.EmptyCollection(collectionName)
 	self.InsertTrades(exchange, pair, trades)
 }
 
-func (self *MgoStore) InsertDeposits(exchange string, deposits []poloniex_go_api.Deposit) {
+func (self *MgoStore) InsertDeposits(exchange string, deposits []exchanges.Deposit) {
 	collectionName := buildDepositHistoryCollectionName(exchange)
 	for _, deposit := range deposits {
 		self.getCollection(collectionName).Insert(deposit)
 	}
 }
 
-func (self *MgoStore) GetDeposits(exchange string, sort *string) (deposits []poloniex_go_api.Deposit) {
+func (self *MgoStore) GetDeposits(exchange string, sort *string) (deposits []exchanges.Deposit) {
 	name := buildDepositHistoryCollectionName(exchange)
 	self.get(name, nil, nil, &deposits)
 	return
 }
 
-func (self *MgoStore) ReplaceDeposits(exchange string, deposits []poloniex_go_api.Deposit) {
+func (self *MgoStore) ReplaceDeposits(exchange string, deposits []exchanges.Deposit) {
 	name := buildDepositHistoryCollectionName(exchange)
 	self.EmptyCollection(name)
 	self.InsertDeposits(exchange, deposits)
 }
 
-func (self *MgoStore) InsertWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal) {
+func (self *MgoStore) InsertWithdrawals(exchange string, withdrawals []exchanges.Withdrawal) {
 	collectionName := buildWithdrawalHistoryCollectionName(exchange)
 	for _, deposit := range withdrawals {
 		self.getCollection(collectionName).Insert(deposit)
 	}
 }
 
-func (self *MgoStore) GetWithdrawals(exchange string, sort *string) (withdrawals []poloniex_go_api.Withdrawal) {
+func (self *MgoStore) GetWithdrawals(exchange string, sort *string) (withdrawals []exchanges.Withdrawal) {
 	name := buildDepositHistoryCollectionName(exchange)
 	self.get(name, nil, nil, &withdrawals)
 	return
 }
 
-func (self *MgoStore) ReplaceWithdrawals(exchange string, withdrawals []poloniex_go_api.Withdrawal) {
+func (self *MgoStore) ReplaceWithdrawals(exchange string, withdrawals []exchanges.Withdrawal) {
 	name := buildWithdrawalHistoryCollectionName(exchange)
 	self.EmptyCollection(name)
 	self.InsertWithdrawals(exchange, withdrawals)

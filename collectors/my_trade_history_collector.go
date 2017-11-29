@@ -1,34 +1,35 @@
 package collectors
 
 import (
-	"poloniex-go-api"
 	log "github.com/inconshreveable/log15"
+	"goku-bot/exchanges"
+	"fmt"
 )
 
 type MyTradeHistoryCollector struct {
-	Poloniex *poloniex_go_api.Poloniex
+	exchange string
+	client   exchanges.Exchange
 }
 
-func NewMyTradeHistoryCollector() *MyTradeHistoryCollector {
-	p := poloniex_go_api.New(API_KEY, API_SECRET)
-
-	return &MyTradeHistoryCollector{p}
+func NewMyTradeHistoryCollector(exchange string, client exchanges.Exchange) *MyTradeHistoryCollector {
+	return &MyTradeHistoryCollector{exchange, client}
 }
 
 func (self *MyTradeHistoryCollector) Key() string {
-	return "MyTradeHistory"
+	return fmt.Sprintf("MyTradeHistory-%s", self.exchange)
 }
 
 func (self *MyTradeHistoryCollector) Collect() {
-	log.Debug("Collecting", "module", "collectors", "key", self.Key())
-	response := self.Poloniex.ReturnMyTradeHistory()
+	log.Debug("Collecting", "module", "exchangeCollectors", "key", self.Key())
+	response := self.client.MyTradeHistory()
 
 	if response.Err != nil {
-		log.Warn("Error collecting", "module", "collectors", "key", self.Key(), "error", response.Err)
+		log.Warn("Error collecting", "module", "exchangeCollectors", "key", self.Key(), "error", response.Err)
 		return
 	}
 
 	data := response.Data
+	log.Debug("about to process trades", "module", "exchangeCollectors", "key", self.Key(), "trades", data)
 
 	sendToProcessor(self.Key(), data)
 }

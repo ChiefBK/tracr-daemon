@@ -20,8 +20,6 @@ var streamsBasePath = filepath.Join(basePath, "streams")
 
 var basePaths = []string{executorsBasePath, strategiesBasePath, mainBasePath, processorsBasePath, receiversBasePath, storeBasePath, brokerBasePath, collectorsBasePath, streamsBasePath}
 
-var loggers = make(map[string]*log.Logger)
-
 func Init() {
 	// create base folder structure
 	for _, path := range basePaths {
@@ -30,8 +28,9 @@ func Init() {
 
 	// Set handlers for logs
 	now := time.Now()
-	formattedTime := now.Format("Jan-2-15:04:05-2006")
+	formattedTime := now.Format("2-Jan-15:04:05-2006")
 	handler := log.MultiHandler(
+		// direct log output from modules to their given log file
 		log.MatchFilterHandler("module", "executors", log.Must.FileHandler(filepath.Join(executorsBasePath, formattedTime + "-executor.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "broker", log.Must.FileHandler(filepath.Join(brokerBasePath, formattedTime + "-broker.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "collectors", log.Must.FileHandler(filepath.Join(collectorsBasePath, formattedTime + "-collectors.txt"), log.JsonFormat())),
@@ -41,6 +40,7 @@ func Init() {
 		log.MatchFilterHandler("module", "store", log.Must.FileHandler(filepath.Join(storeBasePath, formattedTime + "-store.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "strategies", log.Must.FileHandler(filepath.Join(strategiesBasePath, formattedTime + "-strategies.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "streams", log.Must.FileHandler(filepath.Join(streamsBasePath, formattedTime + "-streams.txt"), log.JsonFormat())),
+		// Also send log output to stdout
 		log.LvlFilterHandler(log.LvlError, log.StderrHandler),
 		log.LvlFilterHandler(log.LvlInfo, log.StderrHandler),
 		log.LvlFilterHandler(log.LvlWarn, log.StderrHandler),
