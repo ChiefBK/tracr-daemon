@@ -4,7 +4,7 @@ import (
 	"goku-bot/exchanges"
 	log "github.com/inconshreveable/log15"
 	"time"
-	"goku-bot/store"
+	"goku-bot/keys"
 )
 
 type ChartDataCollector struct {
@@ -36,5 +36,5 @@ func (self *ChartDataCollector) Collect() {
 }
 
 func (self *ChartDataCollector) Key() string {
-	return store.BuildChartDataCollectionName(self.exchange, self.pair, self.interval)
+	return keys.BuildChartDataKey(self.exchange, self.pair, self.interval)
 }

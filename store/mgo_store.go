@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"goku-bot/exchanges"
 	"time"
+	"goku-bot/keys"
 )
 
 type MgoStore struct {
@@ -15,7 +16,7 @@ type MgoStore struct {
 }
 
 func (self *MgoStore) GetChartData(exchange, pair string, interval time.Duration, sort *string) (candles []exchanges.Candle) {
-	name := BuildChartDataCollectionName(exchange, pair, interval)
+	name := keys.BuildChartDataKey(exchange, pair, interval)
 
 	sortVal := ""
 	if sort != nil {
@@ -28,7 +29,7 @@ func (self *MgoStore) GetChartData(exchange, pair string, interval time.Duration
 }
 
 func (self *MgoStore) InsertChartData(exchange, pair string, interal time.Duration, candles []exchanges.Candle) {
-	name := BuildChartDataCollectionName(exchange, pair, interal)
+	name := keys.BuildChartDataKey(exchange, pair, interal)
 
 	for _, candle := range candles {
 		self.getCollection(name).Insert(candle)
@@ -36,7 +37,7 @@ func (self *MgoStore) InsertChartData(exchange, pair string, interal time.Durati
 }
 
 func (self *MgoStore) ReplaceChartData(exchange, pair string, interval time.Duration, candles []exchanges.Candle) {
-	name := BuildChartDataCollectionName(exchange, pair, interval)
+	name := keys.BuildChartDataKey(exchange, pair, interval)
 	self.EmptyCollection(name)
 	self.InsertChartData(exchange, pair, interval, candles)
 }
@@ -80,7 +81,7 @@ func (self *MgoStore) EmptyCollection(name string) error {
 }
 
 func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []exchanges.Trade) {
-	name := buildMyTradeHistoryCollectionName(exchange, pair)
+	name := keys.BuildMyTradeHistoryKey(exchange, pair)
 
 	sortVal := ""
 	if sort != nil {
@@ -93,52 +94,52 @@ func (self *MgoStore) GetTrades(exchange, pair string, sort *string) (trades []e
 }
 
 func (self *MgoStore) InsertTrades(exchange, pair string, trades []exchanges.Trade) {
-	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
+	collectionName := keys.BuildMyTradeHistoryKey(exchange, pair)
 	for _, trade := range trades {
 		self.getCollection(collectionName).Insert(trade)
 	}
 }
 
 func (self *MgoStore) ReplaceTrades(exchange, pair string, trades []exchanges.Trade) {
-	collectionName := buildMyTradeHistoryCollectionName(exchange, pair)
+	collectionName := keys.BuildMyTradeHistoryKey(exchange, pair)
 	self.EmptyCollection(collectionName)
 	self.InsertTrades(exchange, pair, trades)
 }
 
 func (self *MgoStore) InsertDeposits(exchange string, deposits []exchanges.Deposit) {
-	collectionName := buildDepositHistoryCollectionName(exchange)
+	collectionName := keys.BuildDepositHistoryKey(exchange)
 	for _, deposit := range deposits {
 		self.getCollection(collectionName).Insert(deposit)
 	}
 }
 
 func (self *MgoStore) GetDeposits(exchange string, sort *string) (deposits []exchanges.Deposit) {
-	name := buildDepositHistoryCollectionName(exchange)
+	name := keys.BuildDepositHistoryKey(exchange)
 	self.get(name, nil, nil, &deposits)
 	return
 }
 
 func (self *MgoStore) ReplaceDeposits(exchange string, deposits []exchanges.Deposit) {
-	name := buildDepositHistoryCollectionName(exchange)
+	name := keys.BuildDepositHistoryKey(exchange)
 	self.EmptyCollection(name)
 	self.InsertDeposits(exchange, deposits)
 }
 
 func (self *MgoStore) InsertWithdrawals(exchange string, withdrawals []exchanges.Withdrawal) {
-	collectionName := buildWithdrawalHistoryCollectionName(exchange)
+	collectionName := keys.BuildWithdrawalHistoryKey(exchange)
 	for _, deposit := range withdrawals {
 		self.getCollection(collectionName).Insert(deposit)
 	}
 }
 
 func (self *MgoStore) GetWithdrawals(exchange string, sort *string) (withdrawals []exchanges.Withdrawal) {
-	name := buildDepositHistoryCollectionName(exchange)
+	name := keys.BuildDepositHistoryKey(exchange)
 	self.get(name, nil, nil, &withdrawals)
 	return
 }
 
 func (self *MgoStore) ReplaceWithdrawals(exchange string, withdrawals []exchanges.Withdrawal) {
-	name := buildWithdrawalHistoryCollectionName(exchange)
+	name := keys.BuildWithdrawalHistoryKey(exchange)
 	self.EmptyCollection(name)
 	self.InsertWithdrawals(exchange, withdrawals)
 }

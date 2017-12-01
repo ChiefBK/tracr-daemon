@@ -3,10 +3,8 @@ package store
 import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"strings"
 	"time"
 	"goku-bot/exchanges"
-	"fmt"
 )
 
 type Store interface {
@@ -230,24 +228,3 @@ const (
 //func (s *MgoStore) trimCandles(collectionName string) {
 //
 //}
-
-func buildCollectionName(params ...string) string {
-	return strings.Join(params, "-")
-}
-
-func BuildChartDataCollectionName(exchange, pair string, interval time.Duration) string {
-	intervalMins := int64(interval / time.Minute)
-	return buildCollectionName("ChartData", exchange, pair, fmt.Sprintf("%d", intervalMins))
-}
-
-func buildMyTradeHistoryCollectionName(exchange, pair string) string {
-	return buildCollectionName("MyTradeHistory", exchange, pair)
-}
-
-func buildDepositHistoryCollectionName(exchange string) string {
-	return buildCollectionName("MyDepositHistory", exchange)
-}
-
-func buildWithdrawalHistoryCollectionName(exchange string) string {
-	return buildCollectionName("MyWithdrawlHistory", exchange)
-}

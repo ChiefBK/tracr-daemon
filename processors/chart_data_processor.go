@@ -5,6 +5,7 @@ import (
 	"goku-bot/exchanges"
 	log "github.com/inconshreveable/log15"
 	"goku-bot/store"
+	"goku-bot/keys"
 )
 
 type ChartDataProcessor struct {
@@ -28,5 +29,5 @@ func (self *ChartDataProcessor) Process(input interface{}) {
 }
 
 func (self *ChartDataProcessor) Key() string {
-	return store.BuildChartDataCollectionName(self.exchange, self.pair, self.interval)
+	return keys.BuildChartDataKey(self.exchange, self.pair, self.interval)
 }
