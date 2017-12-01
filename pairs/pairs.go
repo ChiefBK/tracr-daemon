@@ -107,7 +107,7 @@ const (
 	XRP_BTC_KRAKEN = "XXRPXXBT"
 )
 
-var poloniexStdPairs = map[string]string{
+var PoloniexStdPairs = map[string]string{
 	"BTC-USD": BTC_USD_POLONIEX,
 	"BCH-USD": BCH_USD_POLONIEX,
 	"LTC-USD": LTC_USD_POLONIEX,
@@ -130,7 +130,7 @@ var poloniexStdPairs = map[string]string{
 	BCN_BTC:     BCN_BTC_POLONIEX,
 }
 
-var poloniexExchPairs = map[string]string{
+var PoloniexExchPairs = map[string]string{
 	BTC_USD_POLONIEX: "BTC-USD",
 	BCH_USD_POLONIEX: "BCH-USD",
 	LTC_USD_POLONIEX: "LTC-USD",
@@ -153,7 +153,7 @@ var poloniexExchPairs = map[string]string{
 	BCN_BTC_POLONIEX:   BCN_BTC,
 }
 
-var krakenStdPairs = map[string]string{
+var KrakenStdPairs = map[string]string{
 	"BTC-USD": "XXBTZUSD",
 	"BCH-USD": "BCHUSD",
 	"LTC-USD": "XLTCZUSD",
@@ -173,7 +173,7 @@ var krakenStdPairs = map[string]string{
 	//"BURST-BTC": "BURST_BTC",
 }
 
-var krakenExchPairs = map[string]string{
+var KrakenExchPairs = map[string]string{
 	"XXBTZUSD": "BTC-USD",
 	"BCHUSD":   "BCH-USD",
 	"XLTCZUSD": "LTC-USD",
@@ -216,7 +216,7 @@ func StandardPair(exchangePairName, exchange string) (string, error) {
 }
 
 func getPoloniexExchPair(pair string) (string, error) {
-	if pair, ok := poloniexStdPairs[pair]; ok {
+	if pair, ok := PoloniexStdPairs[pair]; ok {
 		return pair, nil
 	} else {
 		return "", errors.New("could not find pair specified")
@@ -224,7 +224,7 @@ func getPoloniexExchPair(pair string) (string, error) {
 }
 
 func getKrakenExchPair(pair string) (string, error) {
-	if pair, ok := krakenStdPairs[pair]; ok {
+	if pair, ok := KrakenStdPairs[pair]; ok {
 		return pair, nil
 	} else {
 		return "", errors.New("could not find pair specified")
@@ -232,7 +232,7 @@ func getKrakenExchPair(pair string) (string, error) {
 }
 
 func getPoloniexStdPair(pair string) (string, error) {
-	if pair, ok := poloniexExchPairs[pair]; ok {
+	if pair, ok := PoloniexExchPairs[pair]; ok {
 		return pair, nil
 	} else {
 		return "", errors.New("could not find pair specified")
@@ -240,7 +240,7 @@ func getPoloniexStdPair(pair string) (string, error) {
 }
 
 func getKrakenStdPair(pair string) (string, error) {
-	if pair, ok := krakenExchPairs[pair]; ok {
+	if pair, ok := KrakenExchPairs[pair]; ok {
 		return pair, nil
 	} else {
 		return "", errors.New("could not find pair specified")

@@ -6,11 +6,39 @@ import (
 	"errors"
 	"gopkg.in/mgo.v2/bson"
 	"goku-bot/exchanges"
+	"time"
 )
 
 type MgoStore struct {
 	session  *mgo.Session
 	database *mgo.Database
+}
+
+func (self *MgoStore) GetChartData(exchange, pair string, interval time.Duration, sort *string) (candles []exchanges.Candle) {
+	name := BuildChartDataCollectionName(exchange, pair, interval)
+
+	sortVal := ""
+	if sort != nil {
+		sortVal = *sort
+	}
+
+	self.getCollection(name).Find(bson.M{}).Sort(sortVal).All(&candles)
+
+	return
+}
+
+func (self *MgoStore) InsertChartData(exchange, pair string, interal time.Duration, candles []exchanges.Candle) {
+	name := BuildChartDataCollectionName(exchange, pair, interal)
+
+	for _, candle := range candles {
+		self.getCollection(name).Insert(candle)
+	}
+}
+
+func (self *MgoStore) ReplaceChartData(exchange, pair string, interval time.Duration, candles []exchanges.Candle) {
+	name := BuildChartDataCollectionName(exchange, pair, interval)
+	self.EmptyCollection(name)
+	self.InsertChartData(exchange, pair, interval, candles)
 }
 
 func (self *MgoStore) RetrieveSlicesByQueue(exchange, pair string, interval, start, end int) (slices []*CandleSlice) {

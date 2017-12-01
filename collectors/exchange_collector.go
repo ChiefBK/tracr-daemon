@@ -7,6 +7,7 @@ import (
 	"goku-bot/exchanges"
 	"goku-bot/exchanges/poloniex"
 	"os"
+	"goku-bot/pairs"
 )
 
 type ExchangeCollector struct {
@@ -26,6 +27,13 @@ func (self *ExchangeCollector) Init() {
 
 		myTradeHistoryCollector := NewMyTradeHistoryCollector(exchanges.POLONIEX, client)
 		self.collectors[myTradeHistoryCollector.Key()] = myTradeHistoryCollector
+
+		for pair := range pairs.PoloniexStdPairs {
+			for _, interval := range exchanges.POLONIEX_INTERVALS {
+				chartDataCollector := NewChartDataCollector(exchanges.POLONIEX, pair, interval, client)
+				self.collectors[chartDataCollector.Key()] = chartDataCollector
+			}
+		}
 
 	case exchanges.KRAKEN:
 

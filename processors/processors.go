@@ -4,6 +4,7 @@ import (
 	log "github.com/inconshreveable/log15"
 	"goku-bot/channels"
 	"goku-bot/exchanges"
+	"goku-bot/pairs"
 )
 
 type Processor interface {
@@ -16,6 +17,13 @@ var processors = make(map[string]Processor)
 func Init() {
 	thp := NewMyTradeHistoryProcessor(exchanges.POLONIEX)
 	processors[thp.Key()] = thp
+
+	for pair := range pairs.PoloniexStdPairs {
+		for _, interval := range exchanges.POLONIEX_INTERVALS {
+			cdp := NewChartDataProcessor(exchanges.POLONIEX, pair, interval)
+			processors[cdp.Key()] = cdp
+		}
+	}
 
 	//obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
 	//processors[obr.Key()] = obr

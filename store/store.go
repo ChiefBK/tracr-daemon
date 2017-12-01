@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"goku-bot/exchanges"
+	"fmt"
 )
 
 type Store interface {
@@ -19,6 +20,10 @@ type Store interface {
 	GetTrades(exchange, pair string, sort *string) (trades []exchanges.Trade)
 	InsertTrades(exchange, pair string, trades []exchanges.Trade)
 	ReplaceTrades(exchange, pair string, trades []exchanges.Trade)
+
+	GetChartData(exchange, pair string, interval time.Duration, sort *string) (candles []exchanges.Candle)
+	InsertChartData(exchange, pair string, interal time.Duration, candles []exchanges.Candle)
+	ReplaceChartData(exchange, pair string, interval time.Duration, candles []exchanges.Candle)
 
 	InsertDeposits(exchange string, deposits []exchanges.Deposit)
 	GetDeposits(exchange string, sort *string) (deposits []exchanges.Deposit)
@@ -230,8 +235,9 @@ func buildCollectionName(params ...string) string {
 	return strings.Join(params, "-")
 }
 
-func buildCandleSliceCollectionName(exchange, pair, interval string) string {
-	return buildCollectionName("CandleSlice", exchange, pair, interval)
+func BuildChartDataCollectionName(exchange, pair string, interval time.Duration) string {
+	intervalMins := int64(interval / time.Minute)
+	return buildCollectionName("ChartData", exchange, pair, fmt.Sprintf("%d", intervalMins))
 }
 
 func buildMyTradeHistoryCollectionName(exchange, pair string) string {

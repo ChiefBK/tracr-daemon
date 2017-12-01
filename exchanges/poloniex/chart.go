@@ -10,5 +10,3 @@ type PoloniexCandle struct {
 	QuoteVolume     float64 `json:"quoteVolume"`
 	WeightedAverage float64 `json:"weightedAverage"`
 }
-
-type PoloniexChartData []PoloniexCandle

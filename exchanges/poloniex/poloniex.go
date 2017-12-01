@@ -104,10 +104,10 @@ func (self *Poloniex) Balances() (resp exchanges.BalancesResponse) {
 	return
 }
 
-func (self *Poloniex) ChartData(currencyPair string, period int, start, end time.Time) (resp exchanges.ChartDataResponse) {
+func (self *Poloniex) ChartData(stdPair string, period time.Duration, start, end time.Time) (resp exchanges.ChartDataResponse) {
 	urlQueryArgs := make(map[string]string)
-	urlQueryArgs["currencyPair"], _ = pairs.ExchangePair(currencyPair, "poloniex")
-	urlQueryArgs["period"] = fmt.Sprintf("%d", period)
+	urlQueryArgs["currencyPair"], _ = pairs.ExchangePair(stdPair, "poloniex")
+	urlQueryArgs["period"] = fmt.Sprintf("%d", int(period.Seconds()))
 	urlQueryArgs["start"] = fmt.Sprintf("%d", start.Unix())
 	urlQueryArgs["end"] = fmt.Sprintf("%d", end.Unix())
 	urlQueryArgs["command"] = "returnChartData"
@@ -121,7 +121,7 @@ func (self *Poloniex) ChartData(currencyPair string, period int, start, end time
 		return
 	}
 
-	var poloniexResp PoloniexChartData
+	var poloniexResp []PoloniexCandle
 	err = json.Unmarshal(res, &poloniexResp)
 
 	if err != nil {
@@ -132,7 +132,8 @@ func (self *Poloniex) ChartData(currencyPair string, period int, start, end time
 	}
 
 	for _, candle := range poloniexResp {
-		c := exchanges.Candle{candle.Open, candle.High, candle.Low, candle.Close}
+		dateTime := time.Unix(int64(candle.Date), 0)
+		c := exchanges.Candle{candle.Open, candle.High, candle.Low, candle.Close, dateTime}
 		resp.Data = append(resp.Data, c)
 	}
 
