@@ -46,7 +46,7 @@ func (self *Poloniex) Ticker() (resp exchanges.TickerResponse) {
 	for pair, ticker := range exchangeResp {
 		stdPairName, err := pairs.StandardPair(pair, "poloniex")
 		if err != nil {
-			log.Warn("error finding standard pair name skipping", "module", "exchanges", "exchangePair", pair, "exchange", "poloniex", "error", err)
+			log.Warn("error finding standard pair name skipping", "module", "exchanges", "exchangePair", pair, "exchange", "poloniex", "error", err, "retrieving", "ticker")
 			continue
 		}
 
@@ -90,15 +90,9 @@ func (self *Poloniex) Balances() (resp exchanges.BalancesResponse) {
 
 	resp.Data = make(exchanges.Balances)
 
-	for pair, balance := range balancesResp {
-		stdPairName, err := pairs.StandardPair(pair, "poloniex")
-		if err != nil {
-			log.Warn("error finding standard pair name skipping", "module", "exchanges", "exchangePair", pair, "exchange", "poloniex", "error", err)
-			continue
-		}
-
+	for currency, balance := range balancesResp {
 		available := balance.GetAvailable()
-		resp.Data[stdPairName] = available
+		resp.Data[currency] = available
 	}
 
 	return
@@ -185,7 +179,6 @@ func (self *Poloniex) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
 			pairTrades = append(pairTrades, t)
 		}
 		stdPair, _ := pairs.StandardPair(pair, exchanges.POLONIEX)
-		log.Debug("std pair", "module", "exchanges", "pair", stdPair, "exchangePair", pair)
 		resp.Data[stdPair] = pairTrades
 	}
 

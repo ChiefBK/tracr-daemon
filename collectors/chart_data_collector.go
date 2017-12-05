@@ -30,7 +30,6 @@ func (self *ChartDataCollector) Collect() {
 	}
 
 	data := response.Data
-	log.Debug("about to process trades", "module", "exchangeCollectors", "key", self.Key(), "trades", data)
 
 	sendToProcessor(self.Key(), data)
 }

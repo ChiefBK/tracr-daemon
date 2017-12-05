@@ -20,7 +20,7 @@ func (self *TickerProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
 	ticker := input.(*goku_bot.Ticker)
 
-	streams.BroadcastTicker(self.Key(), *ticker)
+	streams.PutValue(self.Key(), *ticker)
 }
 
 func (self *TickerProcessor) Key() string {

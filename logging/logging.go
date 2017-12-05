@@ -16,9 +16,11 @@ var receiversBasePath = filepath.Join(basePath, "receivers")
 var storeBasePath = filepath.Join(basePath, "store")
 var brokerBasePath = filepath.Join(basePath, "broker")
 var collectorsBasePath = filepath.Join(basePath, "collectors")
+var exchangeCollectorsBasePath = filepath.Join(basePath, "exchangeCollectors")
+var exchangesBasePath = filepath.Join(basePath, "exchanges")
 var streamsBasePath = filepath.Join(basePath, "streams")
 
-var basePaths = []string{executorsBasePath, strategiesBasePath, mainBasePath, processorsBasePath, receiversBasePath, storeBasePath, brokerBasePath, collectorsBasePath, streamsBasePath}
+var basePaths = []string{executorsBasePath, strategiesBasePath, mainBasePath, processorsBasePath, receiversBasePath, storeBasePath, brokerBasePath, collectorsBasePath, exchangeCollectorsBasePath, exchangesBasePath, streamsBasePath}
 
 func Init() {
 	// create base folder structure
@@ -28,7 +30,7 @@ func Init() {
 
 	// Set handlers for logs
 	now := time.Now()
-	formattedTime := now.Format("2-Jan-15:04:05-2006")
+	formattedTime := now.Format("2-Jan-2006-15:04:05")
 	handler := log.MultiHandler(
 		// direct log output from modules to their given log file
 		log.MatchFilterHandler("module", "executors", log.Must.FileHandler(filepath.Join(executorsBasePath, formattedTime + "-executor.txt"), log.JsonFormat())),
@@ -40,6 +42,8 @@ func Init() {
 		log.MatchFilterHandler("module", "store", log.Must.FileHandler(filepath.Join(storeBasePath, formattedTime + "-store.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "strategies", log.Must.FileHandler(filepath.Join(strategiesBasePath, formattedTime + "-strategies.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "streams", log.Must.FileHandler(filepath.Join(streamsBasePath, formattedTime + "-streams.txt"), log.JsonFormat())),
+		log.MatchFilterHandler("module", "exchangeCollectors", log.Must.FileHandler(filepath.Join(exchangeCollectorsBasePath, formattedTime + "-exchangeCollectors.txt"), log.JsonFormat())),
+		log.MatchFilterHandler("module", "exchanges", log.Must.FileHandler(filepath.Join(exchangesBasePath, formattedTime + "-exchanges.txt"), log.JsonFormat())),
 		// Also send log output to stdout
 		log.LvlFilterHandler(log.LvlError, log.StderrHandler),
 		log.LvlFilterHandler(log.LvlInfo, log.StderrHandler),

@@ -14,6 +14,8 @@ import (
 	"goku-bot/streams"
 	"goku-bot/receivers"
 	"goku-bot/logging"
+	"goku-bot/exchanges"
+	"goku-bot/pairs"
 )
 
 var (
@@ -37,7 +39,7 @@ func main() {
 	go processors.StartProcessingCollectors()
 	go processors.StartProcessingReceivers()
 	//go receivers.Start()
-	//go streams.Start()
+	go streams.Start()
 	//go executors.Start()
 
 	//orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
@@ -94,6 +96,9 @@ func main() {
 	//}
 	//
 	//log.Printf("Net USD: %f", netUsdSum)
+
+	btcBalance := streams.ReadBalance(exchanges.POLONIEX, pairs.BTC_POLONIEX)
+	log.Info("BTC balance", "module", "main", "balance", btcBalance)
 
 	timer := time.NewTimer(time.Minute * 3)
 	<-timer.C

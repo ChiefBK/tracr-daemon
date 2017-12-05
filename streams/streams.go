@@ -5,20 +5,16 @@ import (
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"time"
+	"goku-bot/keys"
+	"goku-bot/exchanges"
 )
 
-type AllStreams map[string]chan interface{}
-type AllValues map[string]interface{}
-
-var streams AllStreams
-var values AllValues
+var streams map[string]chan interface{}
+var values map[string]interface{}
 
 func Init() {
-	streams = make(AllStreams)
-	values = make(AllValues)
-
-	streams["poloniex-OrderBook-USDT_BTC"] = make(chan interface{})
-	streams["poloniex-Ticker-USDT_BTC"] = make(chan interface{})
+	streams = make(map[string]chan interface{})
+	values = make(map[string]interface{})
 }
 
 func Start() {
@@ -38,15 +34,33 @@ func broadcastStreams() {
 	}
 }
 
-func BroadcastOrderBook(key string, value goku_bot.OrderBook) {
-	log.Debug("broadcasting order book", "module", "streams", "key", key)
+func PutValue(key string, value interface{}) {
+	log.Debug("puting value", "module", "streams", "key", key, "value", value)
+	if _, ok := values[key]; !ok { // if values does not contain key than create a stream channel
+		log.Debug("adding key to stream channels", "module", "streams", "key", key)
+		streams[key] = make(chan interface{})
+	}
 	values[key] = value
 }
 
-func BroadcastTicker(key string, value goku_bot.Ticker) {
-	log.Debug("broadcasting ticker", "module", "streams", "key", key)
+func ReadBalance(exchange, currency string) float64 {
+	key := keys.BuildBalancesKey(exchange)
+	waitForChannelInitialization(key)
 
-	values[key] = value
+	log.Debug("reading stream", "module", "streams", "key", key)
+
+	streamOutput := <-streams[key]
+	balances := streamOutput.(exchanges.Balances)
+	return balances[currency]
+}
+
+func waitForChannelInitialization(key string) {
+	if _, ok := streams[key]; !ok { // if stream channel hasn't been initialized yet; wait until it is
+		for !ok {
+			<-time.After(1 * time.Second)
+			_, ok = streams[key]
+		}
+	}
 }
 
 func ReadOrderBook(exchange, pair string) goku_bot.OrderBook {

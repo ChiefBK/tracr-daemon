@@ -25,6 +25,9 @@ func Init() {
 		}
 	}
 
+	balancesProcessor := NewBalanceProcessor(exchanges.POLONIEX)
+	processors[balancesProcessor.Key()] = balancesProcessor
+
 	//obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
 	//processors[obr.Key()] = obr
 	//

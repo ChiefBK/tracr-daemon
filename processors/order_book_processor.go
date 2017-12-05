@@ -19,7 +19,7 @@ func NewOrderBookProcessor(exchange, pair string) *OrderBookProcessor {
 func (self *OrderBookProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
 	orderBook := input.(*goku_bot.OrderBook)
-	streams.BroadcastOrderBook(self.Key(), *orderBook)
+	streams.PutValue(self.Key(), *orderBook)
 }
 
 func (self *OrderBookProcessor) Key() string {
