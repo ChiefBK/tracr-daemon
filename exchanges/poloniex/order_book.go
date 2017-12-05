@@ -1,4 +1,4 @@
-package goku_bot
+package poloniex
 
 import (
 	"log"

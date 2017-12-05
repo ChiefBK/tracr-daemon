@@ -6,31 +6,39 @@ import (
 	"bytes"
 	"strconv"
 	"sync"
-	"fmt"
-	"goku-bot"
 	log "github.com/inconshreveable/log15"
+	"goku-bot/keys"
+	"goku-bot/exchanges"
+	"goku-bot/pairs"
+	"goku-bot/exchanges/poloniex"
 )
 
-type OrderBookReceiver struct {
-	exchange  string
-	pair      string
-	orderBook *goku_bot.OrderBook
+type PoloniexOrderBookReceiver struct {
+	exchangePair string
+	orderBook    *poloniex.OrderBook
 }
 
-func NewOrderBookReceiver(exchange, pair string) *OrderBookReceiver {
-	var asks = &goku_bot.OrderBookAsks{make(map[float64]goku_bot.OrderBookEntry), sync.Mutex{}}
-	var bids = &goku_bot.OrderBookBids{make(map[float64]goku_bot.OrderBookEntry), sync.Mutex{}}
-	orderBook := &goku_bot.OrderBook{asks, bids}
+func NewPoloniexOrderBookReceiver(exchangePair string) *PoloniexOrderBookReceiver {
+	var asks = &poloniex.OrderBookAsks{make(map[float64]poloniex.OrderBookEntry), sync.Mutex{}}
+	var bids = &poloniex.OrderBookBids{make(map[float64]poloniex.OrderBookEntry), sync.Mutex{}}
+	orderBook := &poloniex.OrderBook{asks, bids}
 
-	return &OrderBookReceiver{exchange, pair, orderBook}
+	return &PoloniexOrderBookReceiver{exchangePair, orderBook}
 }
 
-func (self *OrderBookReceiver) Key() string {
-	return fmt.Sprintf("%s-OrderBook-%s", self.exchange, self.pair)
+func (self *PoloniexOrderBookReceiver) Key() string {
+	stdPair, err := pairs.StandardPair(self.exchangePair, exchanges.POLONIEX)
+
+	if err != nil {
+		log.Error("could not find standard pair. Are you sure the exchange pair is correct?", "module", "receivers", "exchangePair", self.exchangePair)
+		return ""
+	}
+
+	return keys.BuildOrderBookKey(exchanges.POLONIEX, stdPair)
 }
 
-func (self *OrderBookReceiver) Start() {
-	address := "api2.poloniex.com:443"
+func (self *PoloniexOrderBookReceiver) Start() {
+	address := "api2.poloniex.com"
 
 	connection, err := websocketConnect(address, 5)
 
@@ -41,7 +49,7 @@ func (self *OrderBookReceiver) Start() {
 
 	defer connection.Close()
 
-	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.pair + "\"}")
+	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.exchangePair + "\"}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
 		log.Error("there was an error writing command", "key", self.Key(), "module", "receivers", "error", err)
@@ -76,21 +84,21 @@ func (self *OrderBookReceiver) Start() {
 			ob := m.([]interface{})[2].([]interface{})[0].([]interface{})[1].(map[string]interface{})
 
 			// Store asks and bids
-			var asks []goku_bot.OrderBookEntry
+			var asks []poloniex.OrderBookEntry
 			for k, v := range ob["orderBook"].([]interface{})[0].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := goku_bot.OrderBookEntry{self.pair, seq, price, value}
+				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, value}
 
 				asks = append(asks, entry)
 			}
 			self.syncAsks(asks)
 
-			var bids []goku_bot.OrderBookEntry
+			var bids []poloniex.OrderBookEntry
 			for k, v := range ob["orderBook"].([]interface{})[1].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := goku_bot.OrderBookEntry{self.pair, seq, price, value}
+				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, value}
 
 				bids = append(bids, entry)
 			}
@@ -100,8 +108,8 @@ func (self *OrderBookReceiver) Start() {
 		} else { // if a set of changes
 			changes := m.([]interface{})[2].([]interface{})
 
-			var asks []goku_bot.OrderBookEntry
-			var bids []goku_bot.OrderBookEntry
+			var asks []poloniex.OrderBookEntry
+			var bids []poloniex.OrderBookEntry
 
 			for i := range changes {
 				change := changes[i].([]interface{})
@@ -119,7 +127,7 @@ func (self *OrderBookReceiver) Start() {
 				index++
 				amount, _ := strconv.ParseFloat(change[index].(string), 64)
 
-				entry := goku_bot.OrderBookEntry{self.pair, seq, price, amount}
+				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, amount}
 
 				if isAsk {
 					asks = append(asks, entry)
@@ -137,11 +145,11 @@ func (self *OrderBookReceiver) Start() {
 	}
 }
 
-func (self *OrderBookReceiver) broadcastOrderBook() {
-	sendToProcessor(self.Key(), self.orderBook.DeepCopy())
+func (self *PoloniexOrderBookReceiver) broadcastOrderBook() {
+	sendToProcessor(self.Key(), *self.orderBook.DeepCopy())
 }
 
-func (self *OrderBookReceiver) syncAsks(orders []goku_bot.OrderBookEntry) {
+func (self *PoloniexOrderBookReceiver) syncAsks(orders []poloniex.OrderBookEntry) {
 	self.orderBook.Asks.Lock.Lock()
 	defer self.orderBook.Asks.Lock.Unlock()
 	for _, order := range orders {
@@ -153,7 +161,7 @@ func (self *OrderBookReceiver) syncAsks(orders []goku_bot.OrderBookEntry) {
 	}
 }
 
-func (self *OrderBookReceiver) syncBids(orders []goku_bot.OrderBookEntry) {
+func (self *PoloniexOrderBookReceiver) syncBids(orders []poloniex.OrderBookEntry) {
 	self.orderBook.Bids.Lock.Lock()
 	defer self.orderBook.Bids.Lock.Unlock()
 	for _, order := range orders {

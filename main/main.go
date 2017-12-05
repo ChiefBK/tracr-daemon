@@ -38,7 +38,7 @@ func main() {
 	go collectors.Start()
 	go processors.StartProcessingCollectors()
 	go processors.StartProcessingReceivers()
-	//go receivers.Start()
+	go receivers.Start()
 	go streams.Start()
 	//go executors.Start()
 
@@ -99,6 +99,10 @@ func main() {
 
 	btcBalance := streams.ReadBalance(exchanges.POLONIEX, pairs.BTC_POLONIEX)
 	log.Info("BTC balance", "module", "main", "balance", btcBalance)
+
+	btcUsdOrderBook := streams.ReadOrderBook(exchanges.POLONIEX, pairs.BTC_USD)
+	log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks.Orders))
+
 
 	timer := time.NewTimer(time.Minute * 3)
 	<-timer.C

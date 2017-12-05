@@ -7,6 +7,7 @@ import (
 	"time"
 	"goku-bot/keys"
 	"goku-bot/exchanges"
+	"goku-bot/exchanges/poloniex"
 )
 
 var streams map[string]chan interface{}
@@ -35,7 +36,7 @@ func broadcastStreams() {
 }
 
 func PutValue(key string, value interface{}) {
-	log.Debug("puting value", "module", "streams", "key", key, "value", value)
+	log.Debug("putting value", "module", "streams", "key", key, "value", value)
 	if _, ok := values[key]; !ok { // if values does not contain key than create a stream channel
 		log.Debug("adding key to stream channels", "module", "streams", "key", key)
 		streams[key] = make(chan interface{})
@@ -63,12 +64,13 @@ func waitForChannelInitialization(key string) {
 	}
 }
 
-func ReadOrderBook(exchange, pair string) goku_bot.OrderBook {
+func ReadOrderBook(exchange, pair string) poloniex.OrderBook {
 	log.Debug("reading order book", "module", "streams", "exchange", exchange, "pair", pair)
-	key := fmt.Sprintf("%s-OrderBook-%s", exchange, pair)
+	key := keys.BuildOrderBookKey(exchange, pair)
+	waitForChannelInitialization(key)
 
 	streamOutput := <-streams[key]
-	orderBook := streamOutput.(goku_bot.OrderBook)
+	orderBook := streamOutput.(poloniex.OrderBook)
 
 	return orderBook
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/inconshreveable/log15"
+	"goku-bot/pairs"
 )
 
 type Receiver interface {
@@ -15,9 +16,7 @@ type Receiver interface {
 	Key() string
 }
 
-type AllReceivers map[string]Receiver
-
-var receivers AllReceivers
+var receivers map[string]Receiver
 
 type SortedReceiverKeys []string
 
@@ -26,17 +25,23 @@ func (a SortedReceiverKeys) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SortedReceiverKeys) Less(i, j int) bool { return a[i] < a[j] }
 
 func Init() {
-	receivers = make(AllReceivers)
+	receivers = make(map[string]Receiver)
 
-	obr := NewOrderBookReceiver("poloniex", "USDT_BTC")
+	//for pair := range pairs.PoloniexExchPairs {
+	//	obr := NewPoloniexOrderBookReceiver(pair)
+	//	receivers[obr.Key()] = obr
+	//}
+	obr := NewPoloniexOrderBookReceiver(pairs.BTC_USD_POLONIEX)
 	receivers[obr.Key()] = obr
 
-	tr := NewTickerReceiver("poloniex", "USDT_BTC")
-	receivers[tr.Key()] = tr
+	//tr := NewTickerReceiver("poloniex", "USDT_BTC")
+	//receivers[tr.Key()] = tr
 
 }
 
 func Start() error {
+	log.Info("Starting all receivers", "module", "receivers", "num of receivers", len(receivers))
+
 	for _, receiver := range receivers {
 		log.Info("Starting receiver", "key", receiver.Key(), "module", "receivers")
 		go receiver.Start()
@@ -63,7 +68,7 @@ func websocketConnect(address string, retries int) (*websocket.Conn, error) {
 		connection, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 
 		if err != nil {
-			log.Warn("error connecting - retrying after 5 seconds", "module", "receivers", "error", err, "retriesLeft", retriesLeft)
+			log.Warn("error connecting - retrying after 5 seconds", "module", "receivers", "error", err, "retriesLeft", retriesLeft, "address", u.String())
 			retriesLeft--
 
 			timer := time.NewTimer(time.Second * 5)

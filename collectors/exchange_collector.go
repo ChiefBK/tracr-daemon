@@ -38,6 +38,8 @@ func (self *ExchangeCollector) Init() {
 		balancesCollector := NewBalancesCollector(exchanges.POLONIEX, client)
 		self.collectors[balancesCollector.Key()] = balancesCollector
 
+
+
 	case exchanges.KRAKEN:
 
 	}

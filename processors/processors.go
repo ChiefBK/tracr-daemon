@@ -28,11 +28,16 @@ func Init() {
 	balancesProcessor := NewBalanceProcessor(exchanges.POLONIEX)
 	processors[balancesProcessor.Key()] = balancesProcessor
 
-	//obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
-	//processors[obr.Key()] = obr
-	//
-	//tp := NewTickerProcessor("poloniex", "USDT_BTC")
-	//processors[tp.Key()] = tp
+	obr := NewOrderBookProcessor("poloniex", "USDT_BTC")
+	processors[obr.Key()] = obr
+
+	tp := NewTickerProcessor("poloniex", "USDT_BTC")
+	processors[tp.Key()] = tp
+
+	for pair := range pairs.PoloniexStdPairs {
+		orderBookProcessor := NewOrderBookProcessor(exchanges.POLONIEX, pair)
+		processors[orderBookProcessor.Key()] = orderBookProcessor
+	}
 
 	for key := range processors {
 		log.Debug("Initialized processor", "module", "processors", "key", key)
