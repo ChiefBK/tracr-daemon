@@ -16,4 +16,5 @@ type Exchange interface {
 	ChartData(stdPair string, period time.Duration, start, end time.Time) ChartDataResponse
 	MyTradeHistory() TradeHistoryResponse
 	DepositsWithdrawals() DepositsWithdrawalsResponse
+	OrderBook(stdPair string) OrderBookResponse
 }

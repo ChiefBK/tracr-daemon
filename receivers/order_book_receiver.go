@@ -5,39 +5,28 @@ import (
 	"encoding/json"
 	"bytes"
 	"strconv"
-	"sync"
 	log "github.com/inconshreveable/log15"
 	"goku-bot/keys"
 	"goku-bot/exchanges"
 	"goku-bot/pairs"
-	"goku-bot/exchanges/poloniex"
 )
 
 type PoloniexOrderBookReceiver struct {
-	exchangePair string
-	orderBook    *poloniex.OrderBook
+	pair      string
+	orderBook *exchanges.OrderBook
 }
 
-func NewPoloniexOrderBookReceiver(exchangePair string) *PoloniexOrderBookReceiver {
-	var asks = &poloniex.OrderBookAsks{make(map[float64]poloniex.OrderBookEntry), sync.Mutex{}}
-	var bids = &poloniex.OrderBookBids{make(map[float64]poloniex.OrderBookEntry), sync.Mutex{}}
-	orderBook := &poloniex.OrderBook{asks, bids}
-
-	return &PoloniexOrderBookReceiver{exchangePair, orderBook}
+func NewPoloniexOrderBookReceiver(pair string) *PoloniexOrderBookReceiver {
+	orderBook := exchanges.NewOrderBook(exchanges.POLONIEX, pair)
+	return &PoloniexOrderBookReceiver{pair, orderBook}
 }
 
 func (self *PoloniexOrderBookReceiver) Key() string {
-	stdPair, err := pairs.StandardPair(self.exchangePair, exchanges.POLONIEX)
-
-	if err != nil {
-		log.Error("could not find standard pair. Are you sure the exchange pair is correct?", "module", "receivers", "exchangePair", self.exchangePair)
-		return ""
-	}
-
-	return keys.BuildOrderBookKey(exchanges.POLONIEX, stdPair)
+	return keys.BuildOrderBookKey(exchanges.POLONIEX, self.pair)
 }
 
 func (self *PoloniexOrderBookReceiver) Start() {
+	pair, _ := pairs.ExchangePair(self.pair, exchanges.POLONIEX)
 	address := "api2.poloniex.com"
 
 	connection, err := websocketConnect(address, 5)
@@ -49,7 +38,7 @@ func (self *PoloniexOrderBookReceiver) Start() {
 
 	defer connection.Close()
 
-	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + self.exchangePair + "\"}")
+	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + pair + "\"}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
 		log.Error("there was an error writing command", "key", self.Key(), "module", "receivers", "error", err)
@@ -78,38 +67,34 @@ func (self *PoloniexOrderBookReceiver) Start() {
 			continue
 		}
 
-		seq := int(m.([]interface{})[1].(float64))
+		//seq := int(m.([]interface{})[1].(float64))
 
 		if isFirst { //if full order book
 			ob := m.([]interface{})[2].([]interface{})[0].([]interface{})[1].(map[string]interface{})
 
 			// Store asks and bids
-			var asks []poloniex.OrderBookEntry
+			asks := make(map[float64]float64)
 			for k, v := range ob["orderBook"].([]interface{})[0].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, value}
-
-				asks = append(asks, entry)
+				asks[price] = value
 			}
-			self.syncAsks(asks)
+			self.orderBook.SyncAsks(asks)
 
-			var bids []poloniex.OrderBookEntry
+			bids := make(map[float64]float64)
 			for k, v := range ob["orderBook"].([]interface{})[1].(map[string]interface{}) {
 				price, _ := strconv.ParseFloat(k, 64)
 				value, _ := strconv.ParseFloat(v.(string), 64)
-				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, value}
-
-				bids = append(bids, entry)
+				bids[price] = value
 			}
-			self.syncBids(bids)
+			self.orderBook.SyncBids(bids)
 			isFirst = false
 			log.Info("initial sync of full order book complete", "key", self.Key(), "module", "receivers")
 		} else { // if a set of changes
 			changes := m.([]interface{})[2].([]interface{})
 
-			var asks []poloniex.OrderBookEntry
-			var bids []poloniex.OrderBookEntry
+			asks := make(map[float64]float64)
+			bids := make(map[float64]float64)
 
 			for i := range changes {
 				change := changes[i].([]interface{})
@@ -121,23 +106,21 @@ func (self *PoloniexOrderBookReceiver) Start() {
 					index++
 				}
 
-				var isAsk bool = change[index].(float64) == 1
+				var isAsk = change[index].(float64) == 1
 				index++
 				price, _ := strconv.ParseFloat(change[index].(string), 64)
 				index++
 				amount, _ := strconv.ParseFloat(change[index].(string), 64)
 
-				entry := poloniex.OrderBookEntry{self.exchangePair, seq, price, amount}
-
 				if isAsk {
-					asks = append(asks, entry)
+					asks[price] = amount
 				} else {
-					bids = append(bids, entry)
+					bids[price] = amount
 				}
 			}
 
-			self.syncBids(bids)
-			self.syncAsks(asks)
+			self.orderBook.SyncBids(bids)
+			self.orderBook.SyncAsks(asks)
 			log.Debug("received Orderbook update", "key", self.Key(), "module", "receivers")
 		}
 
@@ -147,28 +130,4 @@ func (self *PoloniexOrderBookReceiver) Start() {
 
 func (self *PoloniexOrderBookReceiver) broadcastOrderBook() {
 	sendToProcessor(self.Key(), *self.orderBook.DeepCopy())
-}
-
-func (self *PoloniexOrderBookReceiver) syncAsks(orders []poloniex.OrderBookEntry) {
-	self.orderBook.Asks.Lock.Lock()
-	defer self.orderBook.Asks.Lock.Unlock()
-	for _, order := range orders {
-		if order.Amount == 0 {
-			delete(self.orderBook.Asks.Orders, order.Amount)
-			continue
-		}
-		self.orderBook.Asks.Orders[order.Price] = order
-	}
-}
-
-func (self *PoloniexOrderBookReceiver) syncBids(orders []poloniex.OrderBookEntry) {
-	self.orderBook.Bids.Lock.Lock()
-	defer self.orderBook.Bids.Lock.Unlock()
-	for _, order := range orders {
-		if order.Amount == 0 {
-			delete(self.orderBook.Bids.Orders, order.Amount)
-			continue
-		}
-		self.orderBook.Bids.Orders[order.Price] = order
-	}
 }

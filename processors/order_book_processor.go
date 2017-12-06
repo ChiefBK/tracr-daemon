@@ -3,8 +3,8 @@ package processors
 import (
 	"goku-bot/streams"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges/poloniex"
 	"goku-bot/keys"
+	"goku-bot/exchanges"
 )
 
 type OrderBookProcessor struct {
@@ -18,7 +18,7 @@ func NewOrderBookProcessor(exchange, pair string) *OrderBookProcessor {
 
 func (self *OrderBookProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
-	orderBook := input.(poloniex.OrderBook)
+	orderBook := input.(exchanges.OrderBook)
 	streams.PutValue(self.Key(), orderBook)
 }
 

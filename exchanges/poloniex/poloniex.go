@@ -20,6 +20,57 @@ type Poloniex struct {
 	client *exchange_client.Client
 }
 
+func (self *Poloniex) OrderBook(stdPair string) (resp exchanges.OrderBookResponse) {
+	panic("implement me")
+
+	exchangePair, err := pairs.ExchangePair(stdPair, exchanges.POLONIEX)
+
+	if err != nil {
+		resp.Err = err
+		return
+	}
+
+	urlQueryArgs := make(map[string]string)
+	urlQueryArgs["command"] = "returnOrderBook"
+	urlQueryArgs["pair"] = exchangePair
+	urlQueryArgs["depth"] = "100"
+
+	clientResponse, err := self.client.Do("GET", "", urlQueryArgs, nil, nil)
+
+	var exchangeResponse PoloniexOrderBook
+	err = json.Unmarshal(clientResponse, &exchangeResponse)
+
+	if err != nil {
+		log.Error("there was an error un-marshalling the order book", "module", "exchanges", "exchange", "poloniex", "error", err)
+		resp.Err = err
+		return
+	}
+
+	orderBook := exchanges.OrderBook{Exchange: exchanges.POLONIEX, Pair: stdPair}
+	asks := make(map[float64]float64)
+	bids := make(map[float64]float64)
+
+	for _, ask := range exchangeResponse.Asks {
+		price := ask[0]
+		volume := ask[1]
+		asks[price] = volume
+	}
+
+	for _, bid := range exchangeResponse.Bids {
+		price := bid[0]
+		volume := bid[1]
+		bids[price] = volume
+	}
+
+	orderBook.Bids = bids
+	orderBook.Asks = asks
+
+	resp.Data = orderBook
+	resp.Err = nil
+
+	return
+}
+
 func (self *Poloniex) Ticker() (resp exchanges.TickerResponse) {
 	urlQueryArgs := make(map[string]string)
 	urlQueryArgs["command"] = "returnTicker"
@@ -218,16 +269,16 @@ func (self *Poloniex) DepositsWithdrawals() (resp exchanges.DepositsWithdrawalsR
 
 	for _, d := range poloniexResponse.Deposits {
 		deposit := exchanges.Deposit{
-			Status: d.Status,
+			Status:    d.Status,
 			Timestamp: d.GetDatetime(),
-			Currency: d.Currency,
-			Amount: d.GetAmount(),
+			Currency:  d.Currency,
+			Amount:    d.GetAmount(),
 		}
 		deposits = append(deposits, deposit)
 	}
 
 	resp.Data = &exchanges.DepositsWithdrawals{
-		Deposits: deposits,
+		Deposits:    deposits,
 		Withdrawals: withdrawals,
 	}
 	resp.Err = nil

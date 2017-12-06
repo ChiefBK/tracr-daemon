@@ -101,7 +101,7 @@ func main() {
 	log.Info("BTC balance", "module", "main", "balance", btcBalance)
 
 	btcUsdOrderBook := streams.ReadOrderBook(exchanges.POLONIEX, pairs.BTC_USD)
-	log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks.Orders))
+	log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks))
 
 
 	timer := time.NewTimer(time.Minute * 3)

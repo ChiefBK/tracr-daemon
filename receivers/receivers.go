@@ -31,7 +31,7 @@ func Init() {
 	//	obr := NewPoloniexOrderBookReceiver(pair)
 	//	receivers[obr.Key()] = obr
 	//}
-	obr := NewPoloniexOrderBookReceiver(pairs.BTC_USD_POLONIEX)
+	obr := NewPoloniexOrderBookReceiver(pairs.BTC_USD)
 	receivers[obr.Key()] = obr
 
 	//tr := NewTickerReceiver("poloniex", "USDT_BTC")

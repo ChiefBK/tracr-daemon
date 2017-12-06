@@ -7,7 +7,6 @@ import (
 	"time"
 	"goku-bot/keys"
 	"goku-bot/exchanges"
-	"goku-bot/exchanges/poloniex"
 )
 
 var streams map[string]chan interface{}
@@ -55,22 +54,13 @@ func ReadBalance(exchange, currency string) float64 {
 	return balances[currency]
 }
 
-func waitForChannelInitialization(key string) {
-	if _, ok := streams[key]; !ok { // if stream channel hasn't been initialized yet; wait until it is
-		for !ok {
-			<-time.After(1 * time.Second)
-			_, ok = streams[key]
-		}
-	}
-}
-
-func ReadOrderBook(exchange, pair string) poloniex.OrderBook {
+func ReadOrderBook(exchange, pair string) exchanges.OrderBook {
 	log.Debug("reading order book", "module", "streams", "exchange", exchange, "pair", pair)
 	key := keys.BuildOrderBookKey(exchange, pair)
 	waitForChannelInitialization(key)
 
 	streamOutput := <-streams[key]
-	orderBook := streamOutput.(poloniex.OrderBook)
+	orderBook := streamOutput.(exchanges.OrderBook)
 
 	return orderBook
 }
@@ -85,4 +75,11 @@ func ReadTicker(exchange, pair string) goku_bot.Ticker {
 	return ticker
 }
 
-// Todo add functions for reading specific streams
+func waitForChannelInitialization(key string) {
+	if _, ok := streams[key]; !ok { // if stream channel hasn't been initialized yet; wait until it is
+		for !ok {
+			<-time.After(1 * time.Second)
+			_, ok = streams[key]
+		}
+	}
+}
