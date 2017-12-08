@@ -34,3 +34,7 @@ func BuildWithdrawalHistoryKey(exchange string) string {
 func BuildOrderBookKey(exchange, pair string) string {
 	return buildKey("OrderBook", exchange, pair)
 }
+
+func BuildIndicatorKey(exchange, pair, indicator string) string {
+	return buildKey("Indicator", exchange, pair, indicator)
+}

@@ -1,0 +1,8 @@
+package indicators
+
+const (
+	EXPONENTIAL_MOVING_AVERAGE = "EMA"
+	SIMPLE_MOVING_AVERAGE = "SMA"
+	MACD = "MACD"
+	AROON = "AROON"
+)

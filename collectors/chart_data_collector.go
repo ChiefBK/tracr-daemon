@@ -21,7 +21,7 @@ func NewChartDataCollector(exchange, pair string, interval time.Duration, client
 func (self *ChartDataCollector) Collect() {
 	log.Debug("Collecting", "module", "exchangeCollectors", "key", self.Key())
 	end := time.Now()
-	start := end.Add(-10 * 24 * time.Hour)
+	start := end.Add(-10 * 24 * time.Hour) // get last 10 days
 	response := self.client.ChartData(self.pair, self.interval, start, end)
 
 	if response.Err != nil {

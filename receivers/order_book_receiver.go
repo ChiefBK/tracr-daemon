@@ -26,7 +26,7 @@ func (self *PoloniexOrderBookReceiver) Key() string {
 }
 
 func (self *PoloniexOrderBookReceiver) Start() {
-	pair, _ := pairs.ExchangePair(self.pair, exchanges.POLONIEX)
+	exchangePair, _ := pairs.ExchangePair(self.pair, exchanges.POLONIEX)
 	address := "api2.poloniex.com"
 
 	connection, err := websocketConnect(address, 5)
@@ -38,7 +38,7 @@ func (self *PoloniexOrderBookReceiver) Start() {
 
 	defer connection.Close()
 
-	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + pair + "\"}")
+	cmdString := []byte("{\"command\" : \"subscribe\", \"channel\" : \"" + exchangePair + "\"}")
 	err = connection.WriteMessage(websocket.TextMessage, cmdString)
 	if err != nil {
 		log.Error("there was an error writing command", "key", self.Key(), "module", "receivers", "error", err)
