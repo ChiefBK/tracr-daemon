@@ -2,7 +2,7 @@ package broker
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies/actions"
+	"goku-bot/command/actions"
 	"goku-bot/executors/responses"
 )
 

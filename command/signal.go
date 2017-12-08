@@ -1,8 +1,8 @@
-package strategies
+package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies/actions"
+	"goku-bot/command/actions"
 )
 
 type Signal struct {
@@ -22,12 +22,12 @@ func (self *Signal) addChild(signal *Signal) {
 }
 
 func (self *Signal) run(actionChan chan<- *actions.Action) {
-	log.Debug("running signal", "module", "strategies", "children", len(self.children), "isRoot", self.isRoot)
+	log.Debug("running signal", "module", "command", "children", len(self.children), "isRoot", self.isRoot)
 	result := self.condition()
 
 	if result { // if signal is true
 		if len(self.children) == 0 && self.action != nil { // if leaf node
-			log.Debug("sending action from signal", "module", "strategies", "action", self.action)
+			log.Debug("sending action from signal", "module", "command", "action", self.action)
 			actionChan <- self.action // send action to tree
 		}
 

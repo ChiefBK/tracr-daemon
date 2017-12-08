@@ -1,16 +1,16 @@
-package strategies
+package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies/conditions"
-	"goku-bot/strategies/actions"
+	"goku-bot/command/conditions"
+	"goku-bot/command/actions"
 )
 
 var bots []*Bot
 
 func Init() {
-	log.Info("Initializing strategies module", "module", "strategies")
-	log.Debug("Creating bots", "module", "strategies")
+	log.Info("Initializing command module", "module", "command")
+	log.Debug("Creating bots", "module", "command")
 
 	rootSignal := NewSignal(conditions.TrueFunction(), nil, true)
 	leafSignal := NewSignal(conditions.TrueFunction(), actions.ShortPositionAction(), false)
@@ -20,7 +20,7 @@ func Init() {
 }
 
 func Start() {
-	log.Info("Starting strategies module", "module", "strategies")
+	log.Info("Starting command module", "module", "command")
 	for _, bot := range bots {
 		go bot.start()
 	}

@@ -9,7 +9,7 @@ import (
 
 var basePath = "logs"
 var executorsBasePath = filepath.Join(basePath, "executors")
-var strategiesBasePath = filepath.Join(basePath, "strategies")
+var strategiesBasePath = filepath.Join(basePath, "command")
 var mainBasePath = filepath.Join(basePath, "main")
 var processorsBasePath = filepath.Join(basePath, "processors")
 var receiversBasePath = filepath.Join(basePath, "receivers")
@@ -40,7 +40,7 @@ func Init() {
 		log.MatchFilterHandler("module", "processors", log.Must.FileHandler(filepath.Join(processorsBasePath, formattedTime + "-processors.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "receivers", log.Must.FileHandler(filepath.Join(receiversBasePath, formattedTime + "-receivers.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "store", log.Must.FileHandler(filepath.Join(storeBasePath, formattedTime + "-store.txt"), log.JsonFormat())),
-		log.MatchFilterHandler("module", "strategies", log.Must.FileHandler(filepath.Join(strategiesBasePath, formattedTime + "-strategies.txt"), log.JsonFormat())),
+		log.MatchFilterHandler("module", "command", log.Must.FileHandler(filepath.Join(strategiesBasePath, formattedTime + "-command.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "streams", log.Must.FileHandler(filepath.Join(streamsBasePath, formattedTime + "-streams.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "exchangeCollectors", log.Must.FileHandler(filepath.Join(exchangeCollectorsBasePath, formattedTime + "-exchangeCollectors.txt"), log.JsonFormat())),
 		log.MatchFilterHandler("module", "exchanges", log.Must.FileHandler(filepath.Join(exchangesBasePath, formattedTime + "-exchanges.txt"), log.JsonFormat())),

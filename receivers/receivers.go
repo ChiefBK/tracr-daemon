@@ -9,6 +9,7 @@ import (
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"goku-bot/pairs"
+	"goku-bot/exchanges"
 )
 
 type Receiver interface {
@@ -34,8 +35,8 @@ func Init() {
 	obr := NewPoloniexOrderBookReceiver(pairs.BTC_USD)
 	receivers[obr.Key()] = obr
 
-	//tr := NewTickerReceiver("poloniex", "USDT_BTC")
-	//receivers[tr.Key()] = tr
+	tr := NewTickerReceiver(exchanges.POLONIEX, pairs.BTC_USD)
+	receivers[tr.Key()] = tr
 
 }
 

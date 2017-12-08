@@ -6,7 +6,7 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies"
+	"goku-bot/command"
 	"os"
 	store2 "goku-bot/store"
 	"goku-bot/collectors"
@@ -53,7 +53,7 @@ func main() {
 	//log.Printf("OrderBook2: %s", orderBook)
 	//log.Printf("ticker: %s", ticker)
 
-	//go strategies.Start()
+	//go command.Start()
 
 	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
 	//tickerSteward := goku_bot.NewTickerSteward()
@@ -138,7 +138,7 @@ func initialize() (err error) {
 	processors.Init()
 	receivers.Init()
 	streams.Init()
-	strategies.Init()
+	command.Init()
 
 	return
 }
@@ -191,7 +191,7 @@ func initialize() (err error) {
 //	bot1ActionQueueCh := make(chan actions.ActionQueue)
 //	bot1ErrorCh := make(chan error)
 //
-//	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, strategies.Strategy1)
+//	//bot1 := goku_bot.NewBot("bot1", "poloniex", BTC_ETH_PAIR, command.Strategy1)
 //	//go bot1.RunStrategy(bot1ActionQueueCh, bot1ErrorCh)
 //
 //	<-bot1ActionQueueCh

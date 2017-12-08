@@ -1,14 +1,13 @@
 package receivers
 
 import (
-	"fmt"
 	log "github.com/inconshreveable/log15"
 	"github.com/gorilla/websocket"
 	"encoding/json"
 	"bytes"
 	"strconv"
-	"time"
-	"goku-bot"
+	"goku-bot/exchanges"
+	"goku-bot/keys"
 )
 
 type TickerReceiver struct {
@@ -66,38 +65,37 @@ func (self *TickerReceiver) Start() {
 		}
 
 		// Extract information from decoded message
-		last, _ := strconv.ParseFloat(ticker[1].(string), 64)
+		//last, _ := strconv.ParseFloat(ticker[1].(string), 64)
 		lowestAsk, _ := strconv.ParseFloat(ticker[2].(string), 64)
 		highestBid, _ := strconv.ParseFloat(ticker[3].(string), 64)
-		percentChange, _ := strconv.ParseFloat(ticker[4].(string), 64)
-		baseVolume, _ := strconv.ParseFloat(ticker[5].(string), 64)
-		quoteVolume, _ := strconv.ParseFloat(ticker[6].(string), 64)
-		isFrozen := ticker[7].(float64) == 1
+		//percentChange, _ := strconv.ParseFloat(ticker[4].(string), 64)
+		//baseVolume, _ := strconv.ParseFloat(ticker[5].(string), 64)
+		//quoteVolume, _ := strconv.ParseFloat(ticker[6].(string), 64)
+		//isFrozen := ticker[7].(float64) == 1
 		twentyFourHourHigh, _ := strconv.ParseFloat(ticker[8].(string), 64)
 		twentyFourHourLow, _ := strconv.ParseFloat(ticker[9].(string), 64)
 
 		// Update Ticker
-		now := time.Now()
-		newTicker := new(goku_bot.Ticker)
-		newTicker.CurrencyPair = "USDT_BTC"
-		newTicker.Last = last
-		newTicker.LowestAsk = lowestAsk
-		newTicker.HighestBid = highestBid
-		newTicker.PercentChange = percentChange
-		newTicker.BaseVolume = baseVolume
-		newTicker.QuoteVolume = quoteVolume
-		newTicker.IsFrozen = isFrozen
-		newTicker.TwentyFourHourHigh = twentyFourHourHigh
-		newTicker.TwentyFourHourLow = twentyFourHourLow
-		newTicker.Updated = now
+		//now := time.Now()
+		var newTicker exchanges.Ticker
+		//newTicker.CurrencyPair = "USDT_BTC"
+		//newTicker.Last = last
+		newTicker.LowestAsk = &lowestAsk
+		newTicker.HighestBid = &highestBid
+		//newTicker.PercentChange = percentChange
+		//newTicker.BaseVolume = baseVolume
+		//newTicker.QuoteVolume = quoteVolume
+		//newTicker.IsFrozen = isFrozen
+		newTicker.TwentyFourHourHigh = &twentyFourHourHigh
+		newTicker.TwentyFourHourLow = &twentyFourHourLow
+		//newTicker.Updated = now
 
 		log.Debug("received ticker update", "module", "receivers", "key", self.Key())
-
 
 		sendToProcessor(self.Key(), newTicker)
 	}
 }
 
 func (self *TickerReceiver) Key() string {
-	return fmt.Sprintf("%s-Ticker-%s", self.exchange, self.pair)
+	return keys.BuildTickerKey(self.exchange, self.pair)
 }

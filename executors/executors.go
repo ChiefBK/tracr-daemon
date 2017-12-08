@@ -1,8 +1,8 @@
 package executors
 
 import (
-	"goku-bot/strategies/actions"
-	. "goku-bot/strategies/actions"
+	"goku-bot/command/actions"
+	. "goku-bot/command/actions"
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"goku-bot/executors/responses"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// TODO - create third action receiver / sender module to link executors module with strategies module
+// TODO - create third action receiver / sender module to link executors module with command module
 func processActions(botKey string, actions actions.ActionQueue) {
 	log.Debug("executor processing actions", "module", "executors", "botKey", botKey)
 

@@ -1,8 +1,8 @@
-package strategies
+package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies/actions"
+	"goku-bot/command/actions"
 )
 
 type Strategy struct {
@@ -14,7 +14,7 @@ func NewStategy(trees []*DecisionTree) *Strategy {
 }
 
 func (self *Strategy) run(botActionChan chan<- *actions.ActionQueue) {
-	log.Debug("running strategy", "module", "strategies")
+	log.Debug("running strategy", "module", "command")
 	botActionQueue := actions.NewActionQueue() // the queue that will be sent back to the bot
 
 	for _, tree := range self.decisionTrees {

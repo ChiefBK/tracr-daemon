@@ -1,10 +1,10 @@
 package processors
 
 import (
-	"goku-bot"
 	"goku-bot/streams"
-	"fmt"
 	log "github.com/inconshreveable/log15"
+	"goku-bot/exchanges"
+	"goku-bot/keys"
 )
 
 type TickerProcessor struct {
@@ -18,11 +18,11 @@ func NewTickerProcessor(exchange, pair string) *TickerProcessor {
 
 func (self *TickerProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
-	ticker := input.(*goku_bot.Ticker)
+	ticker := input.(exchanges.Ticker)
 
-	streams.PutValue(self.Key(), *ticker)
+	streams.PutValue(self.Key(), ticker)
 }
 
 func (self *TickerProcessor) Key() string {
-	return fmt.Sprintf("%s-Ticker-%s", self.exchange, self.pair)
+	return keys.BuildTickerKey(self.exchange, self.pair)
 }

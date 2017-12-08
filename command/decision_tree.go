@@ -1,8 +1,8 @@
-package strategies
+package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/strategies/actions"
+	"goku-bot/command/actions"
 )
 
 type DecisionTree struct {
@@ -15,7 +15,7 @@ func newDecisionTree(rootSignal *Signal, position Position) *DecisionTree {
 }
 
 func (self *DecisionTree) run(actionQueueChan chan<- *actions.ActionQueue) {
-	log.Debug("running tree", "module", "strategies")
+	log.Debug("running tree", "module", "command")
 
 	signalActionChan := make(chan *actions.Action)
 	actionQueue := actions.NewActionQueue()

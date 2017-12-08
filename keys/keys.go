@@ -35,6 +35,10 @@ func BuildOrderBookKey(exchange, pair string) string {
 	return buildKey("OrderBook", exchange, pair)
 }
 
+func BuildTickerKey(exchange, pair string) string {
+	return buildKey("Ticker", exchange, pair)
+}
+
 func BuildIndicatorKey(exchange, pair, indicator string) string {
 	return buildKey("Indicator", exchange, pair, indicator)
 }

@@ -1,7 +1,6 @@
 package streams
 
 import (
-	"goku-bot"
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"time"
@@ -65,12 +64,12 @@ func ReadOrderBook(exchange, pair string) exchanges.OrderBook {
 	return orderBook
 }
 
-func ReadTicker(exchange, pair string) goku_bot.Ticker {
+func ReadTicker(exchange, pair string) exchanges.Ticker {
 	log.Debug("reading ticker", "module", "streams", "exchange", exchange, "pair", pair)
 	key := fmt.Sprintf("%s-Ticker-%s", exchange, pair)
 
 	streamOutput := <-streams[key]
-	ticker := streamOutput.(goku_bot.Ticker)
+	ticker := streamOutput.(exchanges.Ticker)
 
 	return ticker
 }

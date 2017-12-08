@@ -10,8 +10,17 @@ func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, candles []
 		return nil, nil, errors.New("fast ema periods must be less than slow ema periods")
 	}
 
-	fastEma := CalculateExponentialMovingAverage(fastEmaPeriods, candles)
-	slowEma := CalculateExponentialMovingAverage(slowEmaPeriods, candles)
+	fastEma, err := CalculateExponentialMovingAverage(fastEmaPeriods, candles)
+
+	if err != nil {
+		return
+	}
+
+	slowEma, err := CalculateExponentialMovingAverage(slowEmaPeriods, candles)
+
+	if err != nil {
+		return
+	}
 
 	// If there's not enough data to calculate ema's than return error
 	if len(fastEma) == 0 || len(slowEma) == 0 {
@@ -28,7 +37,11 @@ func CalculateMacd(fastEmaPeriods, slowEmaPeriods, signalPeriods int, candles []
 		slowIndex--
 	}
 
-	signalLine = CalculateExponentialMovingAverage(signalPeriods, macdLine)
+	signalLine, err = CalculateExponentialMovingAverage(signalPeriods, macdLine)
+
+	if err != nil {
+		return
+	}
 
 	return
 }
