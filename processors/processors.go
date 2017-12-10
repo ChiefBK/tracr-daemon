@@ -48,6 +48,12 @@ func StartProcessingCollectors() {
 	log.Info("ready to process collector data", "module", "processors")
 	for {
 		input := <-channels.CollectorProcessorChan
+
+		if _, ok := processors[input.Key]; !ok { // if processor being sent information for key it doesn't have
+			log.Warn("received output for uninitialized processor", "key", input.Key, "module", "processors")
+			continue
+		}
+
 		log.Debug("sending to processor", "module", "processors", "key", input.Key)
 		go processors[input.Key].Process(input.Output)
 	}
@@ -58,6 +64,12 @@ func StartProcessingReceivers() {
 
 	for {
 		input := <-channels.ReceiverProcessorChan
+
+		if _, ok := processors[input.Key]; !ok { // if processor being sent information for key it doesn't have
+			log.Warn("received output for uninitialized processor", "key", input.Key, "module", "processors")
+			continue
+		}
+
 		log.Debug("sending to processor", "module", "processors", "key", input.Key)
 		go processors[input.Key].Process(input.Output)
 	}
