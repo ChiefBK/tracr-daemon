@@ -1,0 +1,27 @@
+{
+    "name": "bot1",
+    "exchange": "poloniex",
+    "pair": "USDT-BTC",
+    "strategies" : [
+        {
+            "position" : "CLOSED",
+            "trees" : [
+                {
+                    "root" : {
+                        "isRoot": true,
+                        "condition" : "TrueFunction",
+                        "action" : null,
+                        "children" : [
+                            {
+                                "isRoot": false,
+                                "condition": "TrueFunction",
+                                "action" : "ShortPositionAction",
+                                "children" : []
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

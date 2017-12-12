@@ -7,10 +7,16 @@ import (
 
 type Strategy struct {
 	decisionTrees []*DecisionTree
+	position      string
 }
 
-func NewStategy(trees []*DecisionTree) *Strategy {
-	return &Strategy{trees}
+func NewStategy(position string) *Strategy {
+	var trees []*DecisionTree
+	return &Strategy{trees, position}
+}
+
+func (self *Strategy) AddTree(tree *DecisionTree) {
+	self.decisionTrees = append(self.decisionTrees, tree)
 }
 
 func (self *Strategy) run(botActionChan chan<- *actions.ActionQueue) {

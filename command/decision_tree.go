@@ -7,11 +7,10 @@ import (
 
 type DecisionTree struct {
 	root     *Signal
-	position Position
 }
 
-func newDecisionTree(rootSignal *Signal, position Position) *DecisionTree {
-	return &DecisionTree{rootSignal, position}
+func newDecisionTree(rootSignal *Signal) *DecisionTree {
+	return &DecisionTree{rootSignal}
 }
 
 func (self *DecisionTree) run(actionQueueChan chan<- *actions.ActionQueue) {
@@ -29,7 +28,7 @@ func (self *DecisionTree) run(actionQueueChan chan<- *actions.ActionQueue) {
 	actionQueueChan <- actionQueue // Sends queue of actions to Strategy
 }
 
-func BuildDecisionChain(position Position, signals ...*Signal) *DecisionTree {
+func BuildDecisionChain(position string, signals ...*Signal) *DecisionTree {
 	var rootSignal *Signal
 	var refSignal *Signal
 
@@ -44,5 +43,5 @@ func BuildDecisionChain(position Position, signals ...*Signal) *DecisionTree {
 		refSignal = signal
 	}
 
-	return newDecisionTree(rootSignal, position)
+	return newDecisionTree(rootSignal)
 }

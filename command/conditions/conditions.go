@@ -1,7 +1,7 @@
 package conditions
 
-func TrueFunction() func() bool {
-	return func() bool {
-		return true
-	}
+var ConditionFunctions = make(map[string]func() bool)
+
+func TrueFunction() bool {
+	return true
 }

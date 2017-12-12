@@ -36,6 +36,8 @@ type Action struct {
 	Consumer ActionConsumer
 }
 
+var ActionFunctions = make(map[string]func() *Action)
+
 func (self *Action) SetVolume(volume float64) {
 	self.data["volume"] = volume
 }
