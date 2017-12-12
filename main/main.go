@@ -6,7 +6,6 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
-	"tracr-daemon/command"
 	"os"
 	store2 "tracr-daemon/store"
 	"tracr-daemon/collectors"
@@ -135,7 +134,6 @@ func initialize() (err error) {
 	processors.Init()
 	receivers.Init()
 	streams.Init()
-	command.Init()
 
 	return
 }

@@ -2,7 +2,7 @@ package broker
 
 import (
 	log "github.com/inconshreveable/log15"
-	"tracr-daemon/command/actions"
+	"tracr/actions"
 	"tracr-daemon/executors/responses"
 )
 

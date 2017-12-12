@@ -1,8 +1,8 @@
 package executors
 
 import (
-	"tracr-daemon/command/actions"
-	. "tracr-daemon/command/actions"
+	"tracr/actions"
+	. "tracr/actions"
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/executors/responses"
