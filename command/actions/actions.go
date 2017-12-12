@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"goku-bot/util"
+	"tracr-daemon/util"
 )
 
 // ActionIntents

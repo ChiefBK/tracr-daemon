@@ -2,7 +2,7 @@ package pairs
 
 import (
 	"errors"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 )
 
 /*

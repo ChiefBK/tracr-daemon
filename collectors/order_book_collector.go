@@ -1,8 +1,8 @@
 package collectors
 
 import (
-	"goku-bot/exchanges"
-	"goku-bot/keys"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/keys"
 	log "github.com/inconshreveable/log15"
 )
 

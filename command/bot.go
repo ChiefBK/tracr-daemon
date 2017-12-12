@@ -2,8 +2,8 @@ package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/command/actions"
-	"goku-bot/broker"
+	"tracr-daemon/command/actions"
+	"tracr-daemon/broker"
 )
 
 const (

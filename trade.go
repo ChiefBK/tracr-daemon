@@ -1,10 +1,10 @@
-package goku_bot
+package tracr_daemon
 
 import (
 	"errors"
 	"fmt"
 	"time"
-	"goku-bot/store"
+	"tracr-daemon/store"
 )
 
 type TradeSteward struct {

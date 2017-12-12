@@ -4,10 +4,10 @@ import (
 	"time"
 	log "github.com/inconshreveable/log15"
 	"errors"
-	"goku-bot/exchanges"
-	"goku-bot/exchanges/poloniex"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/exchanges/poloniex"
 	"os"
-	"goku-bot/pairs"
+	"tracr-daemon/pairs"
 )
 
 type ExchangeCollector struct {

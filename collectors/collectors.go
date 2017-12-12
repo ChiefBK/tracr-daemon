@@ -10,9 +10,9 @@ import (
 	"os"
 	"sort"
 	"time"
-	"goku-bot/channels"
+	"tracr-daemon/channels"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 )
 
 var (

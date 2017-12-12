@@ -1,7 +1,7 @@
 package global
 
 const (
-	DB_NAME = "goku-bot"
+	DB_NAME = "tracr-daemon"
 	DB_URI  = "localhost"
 
 	EXCHANGE_POLONIEX = "poloniex"

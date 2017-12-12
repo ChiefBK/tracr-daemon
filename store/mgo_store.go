@@ -1,13 +1,13 @@
 package store
 
 import (
-	. "goku-bot/global"
+	. "tracr-daemon/global"
 	"gopkg.in/mgo.v2"
 	"errors"
 	"gopkg.in/mgo.v2/bson"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	"time"
-	"goku-bot/keys"
+	"tracr-daemon/keys"
 )
 
 type MgoStore struct {

@@ -1,10 +1,10 @@
 package processors
 
 import (
-	"goku-bot/streams"
+	"tracr-daemon/streams"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges"
-	"goku-bot/keys"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/keys"
 )
 
 type TickerProcessor struct {

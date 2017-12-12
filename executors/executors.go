@@ -1,12 +1,12 @@
 package executors
 
 import (
-	"goku-bot/command/actions"
-	. "goku-bot/command/actions"
+	"tracr-daemon/command/actions"
+	. "tracr-daemon/command/actions"
 	"fmt"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/executors/responses"
-	"goku-bot/broker"
+	"tracr-daemon/executors/responses"
+	"tracr-daemon/broker"
 	"time"
 )
 

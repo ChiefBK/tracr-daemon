@@ -2,8 +2,8 @@ package broker
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/command/actions"
-	"goku-bot/executors/responses"
+	"tracr-daemon/command/actions"
+	"tracr-daemon/executors/responses"
 )
 
 type ActionReceiverChannel chan actions.ActionQueue

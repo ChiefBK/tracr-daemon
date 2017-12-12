@@ -1,9 +1,9 @@
 package processors
 
 import (
-	"goku-bot/store"
+	"tracr-daemon/store"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	"fmt"
 )
 

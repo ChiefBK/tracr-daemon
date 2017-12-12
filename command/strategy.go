@@ -2,7 +2,7 @@ package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/command/actions"
+	"tracr-daemon/command/actions"
 )
 
 type Strategy struct {

@@ -2,11 +2,11 @@ package processors
 
 import (
 	"time"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/store"
-	"goku-bot/keys"
-	"goku-bot/processors/indicators"
+	"tracr-daemon/store"
+	"tracr-daemon/keys"
+	"tracr-daemon/processors/indicators"
 )
 
 type ChartDataProcessor struct {

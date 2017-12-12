@@ -2,9 +2,9 @@ package processors
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/channels"
-	"goku-bot/exchanges"
-	"goku-bot/pairs"
+	"tracr-daemon/channels"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/pairs"
 )
 
 type Processor interface {

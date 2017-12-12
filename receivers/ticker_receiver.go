@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"bytes"
 	"strconv"
-	"goku-bot/exchanges"
-	"goku-bot/keys"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/keys"
 )
 
 type TickerReceiver struct {

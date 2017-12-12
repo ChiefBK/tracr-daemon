@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"exchange-client"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges"
-	"goku-bot/pairs"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/pairs"
 )
 
 func NewPoloniexClient(apiKey, apiSecret string) *Poloniex {

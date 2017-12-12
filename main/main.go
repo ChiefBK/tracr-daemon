@@ -6,14 +6,14 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
-	"goku-bot/command"
+	"tracr-daemon/command"
 	"os"
-	store2 "goku-bot/store"
-	"goku-bot/collectors"
-	"goku-bot/processors"
-	"goku-bot/streams"
-	"goku-bot/receivers"
-	"goku-bot/logging"
+	store2 "tracr-daemon/store"
+	"tracr-daemon/collectors"
+	"tracr-daemon/processors"
+	"tracr-daemon/streams"
+	"tracr-daemon/receivers"
+	"tracr-daemon/logging"
 )
 
 var (

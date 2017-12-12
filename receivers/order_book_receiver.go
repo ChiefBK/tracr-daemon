@@ -6,9 +6,9 @@ import (
 	"bytes"
 	"strconv"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/keys"
-	"goku-bot/exchanges"
-	"goku-bot/pairs"
+	"tracr-daemon/keys"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/pairs"
 )
 
 type PoloniexOrderBookReceiver struct {

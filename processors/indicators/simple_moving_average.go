@@ -1,7 +1,7 @@
 package indicators
 
 import (
-	"goku-bot/math"
+	"tracr-daemon/math"
 	"errors"
 )
 

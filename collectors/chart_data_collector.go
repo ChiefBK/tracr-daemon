@@ -1,10 +1,10 @@
 package collectors
 
 import (
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	log "github.com/inconshreveable/log15"
 	"time"
-	"goku-bot/keys"
+	"tracr-daemon/keys"
 )
 
 type ChartDataCollector struct {

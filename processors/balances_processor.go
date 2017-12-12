@@ -1,11 +1,11 @@
 package processors
 
 import (
-	"goku-bot/store"
+	"tracr-daemon/store"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/keys"
-	"goku-bot/exchanges"
-	"goku-bot/streams"
+	"tracr-daemon/keys"
+	"tracr-daemon/exchanges"
+	"tracr-daemon/streams"
 )
 
 type BalanceProcessor struct {

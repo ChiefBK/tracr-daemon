@@ -4,8 +4,8 @@ import (
 	"fmt"
 	log "github.com/inconshreveable/log15"
 	"time"
-	"goku-bot/keys"
-	"goku-bot/exchanges"
+	"tracr-daemon/keys"
+	"tracr-daemon/exchanges"
 )
 
 var streams map[string]chan interface{}

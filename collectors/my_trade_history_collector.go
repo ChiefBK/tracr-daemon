@@ -2,7 +2,7 @@ package collectors
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	"fmt"
 )
 

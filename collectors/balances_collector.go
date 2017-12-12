@@ -1,9 +1,9 @@
 package collectors
 
 import (
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/keys"
+	"tracr-daemon/keys"
 )
 
 type BalancesCollector struct {

@@ -1,15 +1,15 @@
 package receivers
 
 import (
-	"goku-bot/channels"
+	"tracr-daemon/channels"
 	"github.com/gorilla/websocket"
 	"net/url"
 	"time"
 	"errors"
 	"fmt"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/pairs"
-	"goku-bot/exchanges"
+	"tracr-daemon/pairs"
+	"tracr-daemon/exchanges"
 )
 
 type Receiver interface {

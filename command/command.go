@@ -2,8 +2,8 @@ package command
 
 import (
 	log "github.com/inconshreveable/log15"
-	"goku-bot/command/conditions"
-	"goku-bot/command/actions"
+	"tracr-daemon/command/conditions"
+	"tracr-daemon/command/actions"
 	"io/ioutil"
 	"encoding/json"
 	"errors"

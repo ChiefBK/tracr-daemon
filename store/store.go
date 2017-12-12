@@ -4,7 +4,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
-	"goku-bot/exchanges"
+	"tracr-daemon/exchanges"
 )
 
 type Store interface {

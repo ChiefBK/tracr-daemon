@@ -1,10 +1,10 @@
 package processors
 
 import (
-	"goku-bot/streams"
+	"tracr-daemon/streams"
 	log "github.com/inconshreveable/log15"
-	"goku-bot/keys"
-	"goku-bot/exchanges"
+	"tracr-daemon/keys"
+	"tracr-daemon/exchanges"
 )
 
 type OrderBookProcessor struct {
