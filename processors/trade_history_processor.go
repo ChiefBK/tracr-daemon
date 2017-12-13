@@ -1,19 +1,19 @@
 package processors
 
 import (
-	"tracr-daemon/store"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
 	"fmt"
+	"tracr-store"
 )
 
 type MyTradeHistoryProcessor struct {
 	exchange string
-	Store    store.Store
+	Store    tracr_store.Store
 }
 
 func NewMyTradeHistoryProcessor(exchange string) *MyTradeHistoryProcessor {
-	s, _ := store.NewStore()
+	s, _ := tracr_store.NewStore()
 
 	return &MyTradeHistoryProcessor{exchange, s}
 }

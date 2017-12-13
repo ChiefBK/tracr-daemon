@@ -4,20 +4,20 @@ import (
 	"time"
 	"tracr-daemon/exchanges"
 	log "github.com/inconshreveable/log15"
-	"tracr-daemon/store"
 	"tracr-daemon/keys"
 	"tracr-daemon/processors/indicators"
+	"tracr-store"
 )
 
 type ChartDataProcessor struct {
 	exchange string
 	pair     string
 	interval time.Duration
-	store    store.Store
+	store    tracr_store.Store
 }
 
 func NewChartDataProcessor(exchange, pair string, interval time.Duration) *ChartDataProcessor {
-	store, _ := store.NewStore()
+	store, _ := tracr_store.NewStore()
 
 	return &ChartDataProcessor{exchange, pair, interval, store}
 }

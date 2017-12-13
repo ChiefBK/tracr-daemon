@@ -1,16 +1,16 @@
 package processors
 
 import (
-	"tracr-daemon/store"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/keys"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/streams"
+	"tracr-store"
 )
 
 type BalanceProcessor struct {
 	exchange string
-	store    store.Store
+	store    tracr_store.Store
 }
 
 func (self *BalanceProcessor) Process(input interface{}) {
@@ -25,7 +25,7 @@ func (self *BalanceProcessor) Key() string {
 }
 
 func NewBalanceProcessor(exchange string) *BalanceProcessor {
-	store, _ := store.NewStore()
+	store, _ := tracr_store.NewStore()
 
 	return &BalanceProcessor{exchange, store}
 }

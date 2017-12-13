@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"tracr-daemon/store"
+	"tracr-store"
 )
 
 type TradeSteward struct {
-	Store store.Store
+	Store tracr_store.Store
 }
 
 type Position struct {
@@ -21,7 +21,7 @@ type Position struct {
 }
 
 func NewTradeStewared() (*TradeSteward, error) {
-	store, err := store.NewStore()
+	store, err := tracr_store.NewStore()
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("There was an error connecting to the store: %s", err))

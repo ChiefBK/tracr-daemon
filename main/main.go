@@ -7,12 +7,12 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"os"
-	store2 "tracr-daemon/store"
 	"tracr-daemon/collectors"
 	"tracr-daemon/processors"
 	"tracr-daemon/streams"
 	"tracr-daemon/receivers"
 	"tracr-daemon/logging"
+	"tracr-store"
 )
 
 var (
@@ -117,7 +117,7 @@ func initialize() (err error) {
 	//single := flag.Bool("single", false, "")
 	flag.Parse()
 
-	store, err := store2.NewStore()
+	store, err := tracr_store.NewStore()
 
 	if err != nil {
 		err = errors.New("error creating connection to store")
