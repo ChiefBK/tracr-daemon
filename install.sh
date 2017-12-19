@@ -15,3 +15,4 @@ ssh -t iandpierce@35.196.123.75 "sudo mv ~/tracrd /usr/local/bin"
 echo ""
 
 echo "DONE"
+echo ""
