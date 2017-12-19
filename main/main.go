@@ -1,18 +1,13 @@
 package main
 
 import (
-	"errors"
-	"flag"
 	"time"
-
 	log "github.com/inconshreveable/log15"
 	"os"
 	"tracr-daemon/collectors"
 	"tracr-daemon/processors"
 	"tracr-daemon/streams"
 	"tracr-daemon/receivers"
-	"tracr-daemon/logging"
-	"tracr-store"
 )
 
 var (
@@ -22,22 +17,36 @@ var (
 	firstMonitor time.Time
 )
 
-func main() {
-	err := initialize()
+/*
+	Program arguments
 
-	if err != nil {
-		log.Error("Initialization error", "module", "main")
+	tracrd start
+	tracrd stop
+	tracrd monitor
+
+ */
+
+func main() {
+	args := os.Args[1:]
+
+	if len(args) < 1 {
+		// show help
 		return
 	}
 
-	log.Info("Initialization Complete", "module", "main")
+	action := args[0]
 
-	//go collectors.Start()
-	//go processors.StartProcessingCollectors()
-	//go processors.StartProcessingReceivers()
-	//go receivers.Start()
-	//go streams.Start()
-	//go executors.Start()
+	switch action {
+	case "start":
+		start()
+	case "stop":
+		stop()
+	case "monitor":
+		monitor()
+	default:
+		// error
+		return
+	}
 
 	//orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
 	//ticker := streams.ReadTicker("poloniex", "USDT_BTC")
@@ -111,31 +120,30 @@ func main() {
 	//c.Run()
 }
 
-func initialize() (err error) {
-	log.Info("Initializing...", "module", "main")
-	clean := flag.Bool("clean", false, "Clean DB on start")
-	//single := flag.Bool("single", false, "")
-	flag.Parse()
-
-	store, err := tracr_store.NewStore()
+func start() {
+	err := initialize()
 
 	if err != nil {
-		err = errors.New("error creating connection to store")
+		log.Error("Initialization error", "module", "main", "error", err)
 		return
 	}
 
-	if *clean {
-		log.Info("Dropping DB")
-		err = store.DropDatabase()
-	}
+	log.Info("Initialization Complete", "module", "main")
 
-	logging.Init()
-	collectors.Init()
-	processors.Init()
-	receivers.Init()
-	streams.Init()
+	go collectors.Start()
+	go processors.StartProcessingCollectors()
+	go processors.StartProcessingReceivers()
+	go receivers.Start()
+	go streams.Start()
+	//go executors.Start()
+}
 
-	return
+func stop() {
+
+}
+
+func monitor() {
+
 }
 
 //func startGatheringAccountInfo() {

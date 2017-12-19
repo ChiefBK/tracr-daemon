@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 	"strconv"
-	"exchange-client"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/pairs"
+	"tracr-client"
 )
 
 func NewPoloniexClient(apiKey, apiSecret string) *Poloniex {
