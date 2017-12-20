@@ -11,7 +11,7 @@ scp $BUILDPATH/tracrd iandpierce@35.196.123.75:~/
 echo ""
 
 echo "Installing executable"
-ssh -t iandpierce@35.196.123.75 "sudo mv ~/tracrd /usr/local/bin"
+ssh -tt iandpierce@35.196.123.75 "sudo mv ~/tracrd /usr/local/bin"
 echo ""
 
 echo "DONE"

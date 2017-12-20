@@ -6,7 +6,6 @@ import (
 	"errors"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/exchanges/poloniex"
-	"os"
 	"tracr-daemon/pairs"
 )
 
@@ -23,7 +22,7 @@ func NewExchangeCollector(exchange string, throttle time.Duration) *ExchangeColl
 func (self *ExchangeCollector) Init() {
 	switch self.exchange {
 	case exchanges.POLONIEX:
-		client := poloniex.NewPoloniexClient(os.Getenv("POLONIEX_API_KEY"), os.Getenv("POLONIEX_API_SECRET"))
+		client := poloniex.NewPoloniexClient(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 
 		myTradeHistoryCollector := NewMyTradeHistoryCollector(exchanges.POLONIEX, client)
 		self.collectors[myTradeHistoryCollector.Key()] = myTradeHistoryCollector
@@ -37,8 +36,6 @@ func (self *ExchangeCollector) Init() {
 
 		balancesCollector := NewBalancesCollector(exchanges.POLONIEX, client)
 		self.collectors[balancesCollector.Key()] = balancesCollector
-
-
 
 	case exchanges.KRAKEN:
 

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var basePath = "logs"
+var basePath = filepath.Join("/var", "log", "tracr")
 var executorsBasePath = filepath.Join(basePath, "executors")
 var commandBasePath = filepath.Join(basePath, "command")
 var mainBasePath = filepath.Join(basePath, "main")
@@ -31,6 +31,7 @@ func Init() {
 	// Set handlers for logs
 	now := time.Now()
 	formattedTime := now.Format("2-Jan-2006-15:04:05")
+	log.Info("formatted time", "module", "logs", "time", formattedTime)
 	handler := log.MultiHandler(
 		// direct log output from modules to their given log file
 		log.MatchFilterHandler("module", "executors", log.Must.FileHandler(filepath.Join(executorsBasePath, formattedTime + "-executor.txt"), log.JsonFormat())),
@@ -48,7 +49,6 @@ func Init() {
 		log.LvlFilterHandler(log.LvlError, log.StderrHandler),
 		log.LvlFilterHandler(log.LvlInfo, log.StderrHandler),
 		log.LvlFilterHandler(log.LvlWarn, log.StderrHandler),
-		log.LvlFilterHandler(log.LvlDebug, log.StderrHandler),
 	)
 
 	log.Root().SetHandler(handler)

@@ -10,6 +10,12 @@ PLATFORM=amd64
 echo "Building executable for target architecture - "$OS"/"$PLATFORM
 env GOOS=$OS GOARCH=$PLATFORM go build -i -o $BUILDPATH/tracrd $MAINPATH/main.go $MAINPATH/init.go
 
+retVal=$?
+if [ ! $retVal -eq 0 ]; then
+    echo "Error during build"
+    exit $retVal
+fi
+
 echo ""
 echo "Built executable"
 echo ""

@@ -109,15 +109,13 @@ func main() {
 	//btcUsdOrderBook := streams.ReadOrderBook(exchanges.POLONIEX, pairs.BTC_USD)
 	//log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks))
 
-	timer := time.NewTimer(time.Minute * 3)
-	<-timer.C
 
-	//runCandles()
 
-	//log.Println("Starting Cron job")
-	//c := cron.New()
-	//c.AddFunc("0 */1 * * * *", runMonitor)
 	//c.Run()
+	//c.AddFunc("0 */1 * * * *", runMonitor)
+	//c := cron.New()
+	//log.Println("Starting Cron job")
+	//runCandles()
 }
 
 func start() {
@@ -135,7 +133,9 @@ func start() {
 	go processors.StartProcessingReceivers()
 	go receivers.Start()
 	go streams.Start()
-	//go executors.Start()
+
+	timer := time.NewTimer(time.Minute * 3)
+	<-timer.C
 }
 
 func stop() {

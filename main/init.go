@@ -37,7 +37,12 @@ func initialize() (err error) {
 	}
 
 	logging.Init()
-	collectors.Init()
+	err = collectors.Init()
+
+	if err != nil {
+		return
+	}
+
 	processors.Init()
 	receivers.Init()
 	streams.Init()

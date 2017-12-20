@@ -13,11 +13,12 @@ import (
 	"tracr-daemon/channels"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
+	"errors"
 )
 
 var (
-	API_KEY    = os.Getenv("POLONIEX_API_KEY")
-	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
+	POLONIEX_API_KEY    = os.Getenv("POLONIEX_API_KEY")
+	POLONIEX_API_SECRET = os.Getenv("POLONIEX_API_SECRET")
 )
 
 type SortedCollectorKeys []string
@@ -39,7 +40,11 @@ func sortKeys(collectors map[string]Collector) (keys SortedCollectorKeys) {
 var exchangeCollectors []*ExchangeCollector
 
 // initialize all exchange exchangeCollectors
-func Init() {
+func Init() error {
+	if len(POLONIEX_API_KEY) == 0 || len(POLONIEX_API_SECRET) == 0 { // if environmental variables not specified
+		return errors.New("api key and secret env vars not specified")
+	}
+
 	poloniexCollector := NewExchangeCollector(exchanges.POLONIEX, 200*time.Millisecond)
 	poloniexCollector.Init()
 
@@ -49,6 +54,8 @@ func Init() {
 		log.Debug("Initialized exchange collector", "module", "exchangeCollectors", "exchange", ec.exchange)
 	}
 	log.Info("Finished initialization of Collectors module", "module", "exchangeCollectors")
+
+	return nil
 }
 
 func Start() {

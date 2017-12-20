@@ -3,7 +3,7 @@ package broker
 import (
 	log "github.com/inconshreveable/log15"
 	"tracr/actions"
-	"tracr-daemon/executors/responses"
+	"tracr/executors/responses"
 )
 
 type ActionReceiverChannel chan actions.ActionQueue
