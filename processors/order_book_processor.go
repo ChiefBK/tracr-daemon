@@ -1,10 +1,10 @@
 package processors
 
 import (
-	"tracr-daemon/streams"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/keys"
 	"tracr-daemon/exchanges"
+	"tracr-cache"
 )
 
 type OrderBookProcessor struct {
@@ -19,7 +19,7 @@ func NewOrderBookProcessor(exchange, pair string) *OrderBookProcessor {
 func (self *OrderBookProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
 	orderBook := input.(exchanges.OrderBook)
-	streams.PutValue(self.Key(), orderBook)
+	tracr_cache.PutOrderBook(self.Key(), orderBook)
 }
 
 func (self *OrderBookProcessor) Key() string {

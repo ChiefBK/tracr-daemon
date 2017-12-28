@@ -7,14 +7,14 @@ import (
 type OrderBook struct {
 	Exchange string
 	Pair     string
-	Asks     map[float64]float64 // key is price; value is volume
-	Bids     map[float64]float64
+	Asks     map[string]float64 // key is price; value is volume
+	Bids     map[string]float64
 	asksLock sync.Mutex
 	bidsLock sync.Mutex
 }
 
 func NewOrderBook(exchange, pair string) *OrderBook {
-	return &OrderBook{exchange, pair, make(map[float64]float64), make(map[float64]float64), sync.Mutex{}, sync.Mutex{}}
+	return &OrderBook{exchange, pair, make(map[string]float64), make(map[string]float64), sync.Mutex{}, sync.Mutex{}}
 }
 
 type OrderBookResponse struct {
@@ -22,7 +22,7 @@ type OrderBookResponse struct {
 	Err  error
 }
 
-func (self *OrderBook) SyncAsks(orders map[float64]float64) {
+func (self *OrderBook) SyncAsks(orders map[string]float64) {
 	self.asksLock.Lock()
 	defer self.asksLock.Unlock()
 	for price, volume := range orders {
@@ -34,7 +34,7 @@ func (self *OrderBook) SyncAsks(orders map[float64]float64) {
 	}
 }
 
-func (self *OrderBook) SyncBids(orders map[float64]float64) {
+func (self *OrderBook) SyncBids(orders map[string]float64) {
 	self.bidsLock.Lock()
 	defer self.bidsLock.Unlock()
 	for price, volume := range orders {
@@ -52,8 +52,8 @@ func (self *OrderBook) DeepCopy() *OrderBook {
 	defer self.asksLock.Unlock()
 	defer self.bidsLock.Unlock()
 
-	askOrders := make(map[float64]float64)
-	bidOrders := make(map[float64]float64)
+	askOrders := make(map[string]float64)
+	bidOrders := make(map[string]float64)
 
 	for price, volume := range self.Asks {
 		askOrders[price] = volume

@@ -73,17 +73,17 @@ func (self *PoloniexOrderBookReceiver) Start() {
 			ob := m.([]interface{})[2].([]interface{})[0].([]interface{})[1].(map[string]interface{})
 
 			// Store asks and bids
-			asks := make(map[float64]float64)
+			asks := make(map[string]float64)
 			for k, v := range ob["orderBook"].([]interface{})[0].(map[string]interface{}) {
-				price, _ := strconv.ParseFloat(k, 64)
+				price := k
 				value, _ := strconv.ParseFloat(v.(string), 64)
 				asks[price] = value
 			}
 			self.orderBook.SyncAsks(asks)
 
-			bids := make(map[float64]float64)
+			bids := make(map[string]float64)
 			for k, v := range ob["orderBook"].([]interface{})[1].(map[string]interface{}) {
-				price, _ := strconv.ParseFloat(k, 64)
+				price := k
 				value, _ := strconv.ParseFloat(v.(string), 64)
 				bids[price] = value
 			}
@@ -93,8 +93,8 @@ func (self *PoloniexOrderBookReceiver) Start() {
 		} else { // if a set of changes
 			changes := m.([]interface{})[2].([]interface{})
 
-			asks := make(map[float64]float64)
-			bids := make(map[float64]float64)
+			asks := make(map[string]float64)
+			bids := make(map[string]float64)
 
 			for i := range changes {
 				change := changes[i].([]interface{})
@@ -108,7 +108,7 @@ func (self *PoloniexOrderBookReceiver) Start() {
 
 				var isAsk = change[index].(float64) == 1
 				index++
-				price, _ := strconv.ParseFloat(change[index].(string), 64)
+				price := change[index].(string)
 				index++
 				amount, _ := strconv.ParseFloat(change[index].(string), 64)
 

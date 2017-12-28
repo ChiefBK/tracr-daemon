@@ -1,10 +1,10 @@
 package processors
 
 import (
-	"tracr-daemon/streams"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/keys"
+	"tracr-cache"
 )
 
 type TickerProcessor struct {
@@ -20,7 +20,7 @@ func (self *TickerProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
 	ticker := input.(exchanges.Ticker)
 
-	streams.PutValue(self.Key(), ticker)
+	tracr_cache.PutTicker(self.Key(), ticker)
 }
 
 func (self *TickerProcessor) Key() string {

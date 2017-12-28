@@ -10,7 +10,7 @@ import (
 	"tracr-daemon/collectors"
 	"tracr-daemon/processors"
 	"tracr-daemon/receivers"
-	"tracr-daemon/streams"
+	"tracr-cache"
 )
 
 func initialize() (err error) {
@@ -20,6 +20,12 @@ func initialize() (err error) {
 	flag.Parse()
 
 	err = startMongoDb()
+
+	if err != nil {
+		return
+	}
+
+	err = startRedis()
 
 	if err != nil {
 		return
@@ -45,7 +51,7 @@ func initialize() (err error) {
 
 	processors.Init()
 	receivers.Init()
-	streams.Init()
+	tracr_cache.Init()
 
 	return
 }
@@ -64,6 +70,25 @@ func startMongoDb() error {
 	if waitErr != nil {
 		log.Error("Error starting mongodb", "module", "main", "error", waitErr)
 		return errors.New("error starting mongod service (wait)")
+	}
+
+	return nil
+}
+
+func startRedis() error {
+	log.Info("Starting Redis", "module", "main")
+
+	cmd := exec.Command("redis-server", "--daemonize", "yes")
+	startErr := cmd.Start()
+	if startErr != nil {
+		log.Error("Error starting redis server", "module", "main", "error", startErr)
+		return errors.New("error starting redis (start)")
+	}
+
+	waitErr := cmd.Wait()
+	if waitErr != nil {
+		log.Error("Error starting redis server", "module", "main", "error", waitErr)
+		return errors.New("error starting redis (wait)")
 	}
 
 	return nil

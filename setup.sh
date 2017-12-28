@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+echo ""
+echo "STARTING SETUP"
+echo ""
+
 sudo apt-get update
 
 echo "INSTALLING MONGODB"
@@ -10,3 +14,20 @@ echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.6 main" | sudo
 
 sudo apt-get update
 sudo apt-get install -y mongodb-org
+
+echo ""
+echo "FINISHED INSTALLING MONGODB"
+
+echo ""
+
+echo "INSTALLING REDIS SERVER"
+echo ""
+
+sudo apt-get install redis-server
+
+echo ""
+echo "FINISHED INSTALLING REDIS SERVER"
+
+echo ""
+echo "DONE"
+echo ""
