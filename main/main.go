@@ -6,23 +6,34 @@ import (
 	"os"
 	"tracr-daemon/collectors"
 	"tracr-daemon/processors"
-	"tracr-daemon/streams"
 	"tracr-daemon/receivers"
+	"flag"
 )
 
 var (
 	API_KEY    = os.Getenv("POLONIEX_API_KEY")
 	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
-
-	firstMonitor time.Time
 )
 
 /*
-	Program arguments
+	Program usage
 
-	tracrd start
+	tracrd start [--clean] [--log-path <path>]
 	tracrd stop
-	tracrd monitor
+	tracrd monitor <exchange name>
+	tracrd monitor <exchange name> <indicator>
+	tracrd monitor <indicator>
+
+
+	Options
+
+	--clean							wipe database and cache before start
+	--help -h						show help
+	--log-path <path>, -l <path>	specify log path
+	--clear-logs, -c				delete logs before starting
+
+
+	see http://docopt.org/ for docs on program usage syntax
 
  */
 
@@ -34,17 +45,35 @@ func main() {
 		return
 	}
 
-	action := args[0]
+	logPath1 := flag.String("log-path", "", "The base logging path")
+	logPath2 := flag.String("l", "", "The base logging path")
+	clean := flag.Bool("clean", false, "Clean DB on start")
+	onOsx := flag.Bool("osx", false, "Is running on Mac OSX?")
+	flag.Parse()
+
+	var logPath string
+
+	if logPath1 != nil {
+		logPath = *logPath1
+	} else if logPath2 != nil {
+		logPath = *logPath2
+	} else {
+		logPath = ""
+	}
+
+	log.Debug("log path cmd line args", "module", "main", "logpath1", *logPath1, "logpath2", *logPath2)
+	action := args[len(args)-1]
 
 	switch action {
 	case "start":
-		start()
+		start(logPath, *clean, *onOsx)
 	case "stop":
 		stop()
 	case "monitor":
 		monitor()
 	default:
 		// error
+		log.Error("action not defined - exiting")
 		return
 	}
 
@@ -109,8 +138,6 @@ func main() {
 	//btcUsdOrderBook := streams.ReadOrderBook(exchanges.POLONIEX, pairs.BTC_USD)
 	//log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks))
 
-
-
 	//c.Run()
 	//c.AddFunc("0 */1 * * * *", runMonitor)
 	//c := cron.New()
@@ -118,8 +145,8 @@ func main() {
 	//runCandles()
 }
 
-func start() {
-	err := initialize()
+func start(logPath string, cleanDb bool, onOsx bool) {
+	err := initialize(logPath, cleanDb, onOsx)
 
 	if err != nil {
 		log.Error("Initialization error", "module", "main", "error", err)
@@ -132,7 +159,6 @@ func start() {
 	go processors.StartProcessingCollectors()
 	go processors.StartProcessingReceivers()
 	go receivers.Start()
-	go streams.Start()
 
 	timer := time.NewTimer(time.Minute * 3)
 	<-timer.C

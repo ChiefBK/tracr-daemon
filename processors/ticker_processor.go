@@ -17,8 +17,8 @@ func NewTickerProcessor(exchange, pair string) *TickerProcessor {
 }
 
 func (self *TickerProcessor) Process(input interface{}) {
-	log.Debug("processing", "key", self.Key(), "module", "processors")
 	ticker := input.(exchanges.Ticker)
+	log.Debug("processing", "key", self.Key(), "module", "processors", "tickerHighestBid", *ticker.HighestBid)
 
 	tracr_cache.PutTicker(self.Key(), ticker)
 }

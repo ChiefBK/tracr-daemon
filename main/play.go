@@ -19,13 +19,13 @@ type OrderBookEntry struct {
 	Amount float64
 }
 
-func main() {
-	a := os.Getenv("POLONIEX_API_KEYYY")
-	fmt.Println(a)
-	fmt.Println(len(a))
-
-	fmt.Println("done")
-}
+//func main() {
+//	a := os.Getenv("POLONIEX_API_KEYYY")
+//	fmt.Println(a)
+//	fmt.Println(len(a))
+//
+//	fmt.Println("done")
+//}
 
 func GetBytes(key interface{}) ([]byte, error) {
 	var buf bytes.Buffer

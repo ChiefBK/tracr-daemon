@@ -47,17 +47,17 @@ func (self *Poloniex) OrderBook(stdPair string) (resp exchanges.OrderBookRespons
 	}
 
 	orderBook := exchanges.OrderBook{Exchange: exchanges.POLONIEX, Pair: stdPair}
-	asks := make(map[float64]float64)
-	bids := make(map[float64]float64)
+	asks := make(map[string]float64)
+	bids := make(map[string]float64)
 
 	for _, ask := range exchangeResponse.Asks {
-		price := ask[0]
+		price := strconv.FormatFloat(ask[0], 'f', 8, 64)
 		volume := ask[1]
 		asks[price] = volume
 	}
 
 	for _, bid := range exchangeResponse.Bids {
-		price := bid[0]
+		price := strconv.FormatFloat(bid[0], 'f', 8, 64)
 		volume := bid[1]
 		bids[price] = volume
 	}

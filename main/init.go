@@ -4,22 +4,20 @@ import (
 	log "github.com/inconshreveable/log15"
 	"os/exec"
 	"errors"
-	"flag"
 	"tracr-store"
 	"tracr-daemon/logging"
 	"tracr-daemon/collectors"
 	"tracr-daemon/processors"
 	"tracr-daemon/receivers"
 	"tracr-cache"
+	"tracr-daemon/util"
 )
 
-func initialize() (err error) {
+func initialize(logPath string, cleanDb bool, onOsx bool) (err error) {
 	log.Info("Initializing...", "module", "main")
-	clean := flag.Bool("clean", false, "Clean DB on start")
 	//single := flag.Bool("single", false, "")
-	flag.Parse()
 
-	err = startMongoDb()
+	err = startMongoDb(onOsx)
 
 	if err != nil {
 		return
@@ -37,12 +35,12 @@ func initialize() (err error) {
 		return
 	}
 
-	if *clean {
+	if cleanDb {
 		log.Info("Dropping DB")
 		err = store.DropDatabase()
 	}
 
-	logging.Init()
+	logging.Init(logPath)
 	err = collectors.Init()
 
 	if err != nil {
@@ -56,20 +54,30 @@ func initialize() (err error) {
 	return
 }
 
-func startMongoDb() error {
-	log.Info("Starting MongoDB", "module", "main")
+func startMongoDb(onOsx bool) error {
+	log.Info("Seeing if MongoDB is already running")
+	testCmd := exec.Command("mongod", "--fork", "--logpath", "/Users/ian/mongod.log")
 
-	cmd := exec.Command("sudo", "service", "mongod", "start")
-	startErr := cmd.Start()
-	if startErr != nil {
-		log.Error("Error starting mongodb", "module", "main", "error", startErr)
-		return errors.New("error starting mongod service (start)")
+	returnCode := util.ExecCommandWithCode(testCmd)
+	log.Debug("test return code", "module", "main", "code", returnCode)
+	if returnCode != 0 { // if mongoDB is already running
+		log.Info("MongoDB is already running", "module", "main")
+		return nil
 	}
 
-	waitErr := cmd.Wait()
-	if waitErr != nil {
-		log.Error("Error starting mongodb", "module", "main", "error", waitErr)
-		return errors.New("error starting mongod service (wait)")
+	log.Info("Starting MongoDB", "module", "main", "onOsx", onOsx)
+
+	var cmd *exec.Cmd
+	if onOsx {
+		cmd = exec.Command("mongod", "--fork", "--logpath", "/Users/ian/mongod.log")
+	} else {
+		cmd = exec.Command("sudo", "service", "mongod", "start")
+	}
+
+	err := util.ExecCommand(cmd)
+	if err != nil {
+		log.Error("Error starting mongodb", "module", "main", "error", err)
+		return errors.New("error starting mongod service")
 	}
 
 	return nil
@@ -79,16 +87,10 @@ func startRedis() error {
 	log.Info("Starting Redis", "module", "main")
 
 	cmd := exec.Command("redis-server", "--daemonize", "yes")
-	startErr := cmd.Start()
-	if startErr != nil {
-		log.Error("Error starting redis server", "module", "main", "error", startErr)
-		return errors.New("error starting redis (start)")
-	}
-
-	waitErr := cmd.Wait()
-	if waitErr != nil {
-		log.Error("Error starting redis server", "module", "main", "error", waitErr)
-		return errors.New("error starting redis (wait)")
+	err := util.ExecCommand(cmd)
+	if err != nil {
+		log.Error("Error starting redis server", "module", "main", "error", err)
+		return errors.New("error starting redis")
 	}
 
 	return nil
