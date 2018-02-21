@@ -10,30 +10,61 @@ import (
 	"strconv"
 )
 
-const BASE_URL = "https://api.kraken.com/0"
+const BASE_URL = "https://api.kraken.com"
 
 type KrakenClient struct {
-	apiClient tracr_client.BaseClient
+	apiClient tracr_client.BaseApiClient
 }
 
 func NewKrakenClient(apiKey, apiSecret string) *KrakenClient {
-	client := tracr_client.NewClient(apiKey, apiSecret, exchanges.KRAKEN, BASE_URL, BASE_URL, exchanges.KRAKEN_THROTTLE)
+	client := tracr_client.NewApiClient(apiKey, apiSecret, exchanges.KRAKEN, BASE_URL, BASE_URL, exchanges.KRAKEN_THROTTLE)
 	return &KrakenClient{client}
 }
 
 func (self *KrakenClient) Ticker() exchanges.TickerResponse {
 	panic("implement me")
+
+
 }
 
-func (*KrakenClient) Balances() exchanges.BalancesResponse {
-	panic("implement me")
+func (self *KrakenClient) Balances() (resp exchanges.BalancesResponse) {
+	exchangeResp, err := self.apiClient.Do("POST", "/0/private/Balance", nil, nil, nil)
+
+	if err != nil {
+		log.Error("error getting making request", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "balances", "error", err)
+		resp.Err = err
+		return
+	}
+
+	var krakenResponse KrakenResponse
+	krakenResponse.Result = new(map[string]string)
+
+	err = json.Unmarshal(exchangeResp, &krakenResponse)
+
+	if err != nil {
+		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "balances", "error", err)
+		resp.Err = err
+		return
+	}
+
+	results := *krakenResponse.Result.(*map[string]string)
+	data := make(map[string]float64)
+
+	for currency, amount := range results {
+		amountFloat, _ := strconv.ParseFloat(amount, 64)
+		data[currency] = amountFloat
+	}
+
+	resp.Data = data
+	resp.Err = nil
+	return
 }
 
 func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start, end time.Time) (resp exchanges.ChartDataResponse) {
 	krakenPair, err := pairs.ExchangePair(stdPair, exchanges.KRAKEN)
 
 	if err != nil {
-		log.Error("std pair argument not valid", "module", "exchanges", "exchange", exchanges.KRAKEN, "stdPair", stdPair, "error", err)
+		log.Error("std pair argument not valid", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "stdPair", stdPair, "error", err)
 		resp.Err = err
 		return
 	}
@@ -43,10 +74,10 @@ func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start,
 	bodyArgs["interval"] = strconv.FormatInt(int64(period.Minutes()), 10)
 	bodyArgs["since"] = strconv.FormatInt(start.Unix(), 10)
 
-	exchangeResp, err := self.apiClient.Do("POST", "/public/OHLC", nil, bodyArgs, nil)
+	exchangeResp, err := self.apiClient.Do("POST", "/0/public/OHLC", nil, bodyArgs, nil)
 
 	if err != nil {
-		log.Error("error getting making request", "module", "exchanges", "exchange", exchanges.KRAKEN, "stdPair", stdPair, "error", err)
+		log.Error("error getting making request", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "stdPair", stdPair, "error", err)
 		resp.Err = err
 		return
 	}
@@ -57,7 +88,7 @@ func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start,
 	err = json.Unmarshal(exchangeResp, &krakenResponse)
 
 	if err != nil {
-		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "stdPair", stdPair, "error", err)
+		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "stdPair", stdPair, "error", err)
 		resp.Err = err
 		return
 	}
@@ -113,7 +144,7 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 	bodyArgs := make(map[string]string)
 	bodyArgs["pair"] = krakenPair
 
-	clientResponse, err := self.apiClient.Do("POST", "/public/Depth", nil, bodyArgs, nil)
+	clientResponse, err := self.apiClient.Do("POST", "/0/public/Depth", nil, bodyArgs, nil)
 
 	var exchangeResponse KrakenResponse
 	exchangeResponse.Result = &KrakenOrderBookResponse{}
@@ -121,7 +152,7 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 	err = json.Unmarshal(clientResponse, &exchangeResponse)
 
 	if err != nil {
-		log.Error("there was an error un-marshalling the order book", "module", "exchanges", "exchange", exchanges.KRAKEN, "error", err)
+		log.Error("there was an error un-marshalling the order book", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "orderBook", "error", err)
 		resp.Err = err
 		return
 	}
@@ -138,7 +169,7 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 		volume, err := strconv.ParseFloat(ask.Amount, 64)
 
 		if err != nil {
-			log.Error("error converting kraken amount to float", "module", "exchanges", "exchange", exchanges.KRAKEN, "error", err)
+			log.Error("error converting kraken amount to float", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "orderBook", "error", err)
 			continue
 		}
 
@@ -150,7 +181,7 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 		volume, err := strconv.ParseFloat(bid.Amount, 64)
 
 		if err != nil {
-			log.Error("error converting kraken amount to float", "module", "exchanges", "exchange", exchanges.KRAKEN, "error", err)
+			log.Error("error converting kraken amount to float", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "orderBook", "error", err)
 			continue
 		}
 

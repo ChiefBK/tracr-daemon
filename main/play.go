@@ -1,36 +1,24 @@
 package main
 
 import (
-	"bytes"
-	"encoding/gob"
+	"tracr-client"
+	"tracr-daemon/exchanges"
+	"time"
+	"github.com/inconshreveable/log15"
 )
 
-type FullOrderBook struct {
-	CurrencyPair string
-	Asks         []OrderBookEntry
-	Bids         []OrderBookEntry
-	Sequence     float64
-}
+func main() {
+	key := "qvktu9Z2HklydKJrUQK2SkS5mNkOZA3tk7QS0iInlV3uV31LT7VJTytZ"
+	secret := "pvm2iGZS2mxcgtX+yY45kNlZXY0s/yicBduK/JXMlbwQ3iBA44sp9wcI0Ji6Ydzdy3uobM16eiWZ8Y02OngwIg=="
 
-type OrderBookEntry struct {
-	Price  float64
-	Amount float64
-}
+	client := tracr_client.NewApiClient(key, secret, exchanges.KRAKEN, "https://api.kraken.com", "https://api.kraken.com", 1*time.Second)
 
-//func main() {
-//	a := os.Getenv("POLONIEX_API_KEYYY")
-//	fmt.Println(a)
-//	fmt.Println(len(a))
-//
-//	fmt.Println("done")
-//}
+	resp, err := client.Do("POST", "/0/private/Balance", nil, nil, nil)
 
-func GetBytes(key interface{}) ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(key)
 	if err != nil {
-		return nil, err
+		log15.Error("there was an error", "error", err)
+		return
 	}
-	return buf.Bytes(), nil
+
+	log15.Info("resp", "val", string(resp))
 }

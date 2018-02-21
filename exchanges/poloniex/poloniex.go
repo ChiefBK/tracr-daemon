@@ -12,12 +12,12 @@ import (
 )
 
 func NewPoloniexClient(apiKey, apiSecret string) *PoloniexClient {
-	client := tracr_client.NewClient(apiKey, apiSecret, "poloniex", "https://poloniex.com/tradingApi", "https://poloniex.com/public", exchanges.POLONIEX_THROTTLE)
+	client := tracr_client.NewApiClient(apiKey, apiSecret, "poloniex", "https://poloniex.com/tradingApi", "https://poloniex.com/public", exchanges.POLONIEX_THROTTLE)
 	return &PoloniexClient{client}
 }
 
 type PoloniexClient struct {
-	apiClient *tracr_client.Client
+	apiClient *tracr_client.ApiClient
 }
 
 func (self *PoloniexClient) OrderBook(stdPair string) (resp exchanges.OrderBookResponse) {
