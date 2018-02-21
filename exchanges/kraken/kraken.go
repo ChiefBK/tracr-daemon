@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	log "github.com/inconshreveable/log15"
 	"strconv"
+	"strings"
 )
 
 const BASE_URL = "https://api.kraken.com"
@@ -21,10 +22,64 @@ func NewKrakenClient(apiKey, apiSecret string) *KrakenClient {
 	return &KrakenClient{client}
 }
 
-func (self *KrakenClient) Ticker() exchanges.TickerResponse {
-	panic("implement me")
+func (self *KrakenClient) Ticker() (resp exchanges.TickerResponse) {
+	bodyArgs := make(map[string]string)
+	var krakenPairs []string
 
+	for krakenPair := range pairs.KrakenExchPairs {
+		krakenPairs = append(krakenPairs, krakenPair)
+	}
 
+	bodyArgs["pairs"] = strings.Join(krakenPairs, ", ")
+
+	exchangeResp, err := self.apiClient.Do("POST", "/0/public/Ticker", nil, nil, nil)
+
+	if err != nil {
+		log.Error("error getting making request", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "ticker", "error", err)
+		resp.Err = err
+		return
+	}
+
+	var krakenResponse KrakenResponse
+	krakenResponse.Result = new(map[string]KrakenTickerResult)
+
+	err = json.Unmarshal(exchangeResp, &krakenResponse)
+
+	if err != nil {
+		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "ticker", "error", err)
+		resp.Err = err
+		return
+	}
+
+	data := make(map[string]exchanges.Ticker)
+
+	for pair, result := range *krakenResponse.Result.(*map[string]KrakenTickerResult) {
+		lastTrade, _ := strconv.ParseFloat(result.C[0], 64)
+		highestBid, _ := strconv.ParseFloat(result.B[0], 64)
+		lowestAsk, _ := strconv.ParseFloat(result.A[0], 64)
+		twentyFourHourHigh, _ := strconv.ParseFloat(result.H[1], 64)
+		twentyFourHourLow, _ := strconv.ParseFloat(result.L[1], 64)
+
+		ticker := exchanges.Ticker{
+			&lastTrade,
+			&highestBid,
+			&lowestAsk,
+			&twentyFourHourHigh,
+			&twentyFourHourLow,
+		}
+
+		stdPair, err := pairs.StandardPair(pair, exchanges.KRAKEN)
+
+		if err != nil {
+			log.Error("error retrieving standard pair", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "ticker", "exchangePair", pair, "error", err)
+		}
+
+		data[stdPair] = ticker
+	}
+
+	resp.Data = data
+	resp.Err = nil
+	return
 }
 
 func (self *KrakenClient) Balances() (resp exchanges.BalancesResponse) {
@@ -95,7 +150,6 @@ func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start,
 
 	resultPtr := krakenResponse.Result.(*map[string]interface{})
 	result := *resultPtr
-
 
 	ohlcData := result[krakenPair].([]interface{})
 
