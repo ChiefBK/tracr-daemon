@@ -6,7 +6,6 @@ import (
 	"errors"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/exchanges/poloniex"
-	"tracr-daemon/pairs"
 )
 
 type ExchangeCollector struct {
@@ -24,15 +23,15 @@ func (self *ExchangeCollector) Init() {
 	case exchanges.POLONIEX:
 		client := poloniex.NewPoloniexClient(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 
-		myTradeHistoryCollector := NewMyTradeHistoryCollector(exchanges.POLONIEX, client)
-		self.collectors[myTradeHistoryCollector.Key()] = myTradeHistoryCollector
-
-		for pair := range pairs.PoloniexStdPairs {
-			for _, interval := range exchanges.POLONIEX_INTERVALS {
-				chartDataCollector := NewChartDataCollector(exchanges.POLONIEX, pair, interval, client)
-				self.collectors[chartDataCollector.Key()] = chartDataCollector
-			}
-		}
+		//myTradeHistoryCollector := NewMyTradeHistoryCollector(exchanges.POLONIEX, client)
+		//self.collectors[myTradeHistoryCollector.Key()] = myTradeHistoryCollector
+		//
+		//for pair := range pairs.PoloniexStdPairs {
+		//	for _, interval := range exchanges.POLONIEX_INTERVALS {
+		//		chartDataCollector := NewChartDataCollector(exchanges.POLONIEX, pair, interval, client)
+		//		self.collectors[chartDataCollector.Key()] = chartDataCollector
+		//	}
+		//}
 
 		balancesCollector := NewBalancesCollector(exchanges.POLONIEX, client)
 		self.collectors[balancesCollector.Key()] = balancesCollector

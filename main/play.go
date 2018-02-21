@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"os"
-	"fmt"
 )
 
 type FullOrderBook struct {

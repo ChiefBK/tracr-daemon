@@ -3,9 +3,7 @@ package processors
 import (
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/keys"
-	"tracr-daemon/exchanges"
 	"tracr-store"
-	"tracr-cache"
 )
 
 type BalanceProcessor struct {
@@ -15,9 +13,9 @@ type BalanceProcessor struct {
 
 func (self *BalanceProcessor) Process(input interface{}) {
 	log.Debug("processing", "key", self.Key(), "module", "processors")
-	balances := input.(exchanges.Balances)
+	//balances := input.(exchanges.Balances)
 
-	tracr_cache.PutBalances(self.Key(), balances)
+	//tracr_cache.PutBalances(self.Key(), balances)
 }
 
 func (self *BalanceProcessor) Key() string {

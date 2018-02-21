@@ -4,11 +4,13 @@ import (
 	"tracr-daemon/exchanges"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/keys"
+	"tracr-cache"
 )
 
 type BalancesCollector struct {
 	exchange       string
-	exchangeClient exchanges.Exchange
+	exchangeClient exchanges.ExchangeClient
+	cacheClient    *tracr_cache.CacheClient
 }
 
 func (self *BalancesCollector) Collect() {
@@ -19,19 +21,26 @@ func (self *BalancesCollector) Collect() {
 	log.Debug("balances response", "module", "exchangeCollectors", "key", self.Key(), "response", response)
 
 	if response.Err != nil {
-		log.Warn("Error collecting", "module", "exchangeCollectors", "key", self.Key(), "error", response.Err)
+		log.Error("Error collecting", "module", "exchangeCollectors", "key", self.Key(), "error", response.Err)
 		return
 	}
 
 	data := response.Data
 
-	sendToProcessor(self.Key(), data)
+	self.cacheClient.PutBalances(self.Key(), data)
 }
 
 func (self *BalancesCollector) Key() string {
 	return keys.BuildBalancesKey(self.exchange)
 }
 
-func NewBalancesCollector(exchange string, exchangeClient exchanges.Exchange) *BalancesCollector {
-	return &BalancesCollector{exchange, exchangeClient}
+func NewBalancesCollector(exchange string, exchangeClient exchanges.ExchangeClient) *BalancesCollector {
+	cacheClient, err := tracr_cache.NewCacheClient()
+
+	if err != nil {
+		log.Error("error creating balances collector", "module", "exchangeCollectors", "exchange", exchange, "error", err)
+		return nil
+	}
+
+	return &BalancesCollector{exchange, exchangeClient, cacheClient}
 }

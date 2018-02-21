@@ -11,16 +11,16 @@ import (
 	"tracr-client"
 )
 
-func NewPoloniexClient(apiKey, apiSecret string) *Poloniex {
+func NewPoloniexClient(apiKey, apiSecret string) *PoloniexClient {
 	client := tracr_client.NewClient(apiKey, apiSecret, "poloniex", "https://poloniex.com/tradingApi", "https://poloniex.com/public", exchanges.POLONIEX_THROTTLE)
-	return &Poloniex{client}
+	return &PoloniexClient{client}
 }
 
-type Poloniex struct {
-	client *tracr_client.Client
+type PoloniexClient struct {
+	apiClient *tracr_client.Client
 }
 
-func (self *Poloniex) OrderBook(stdPair string) (resp exchanges.OrderBookResponse) {
+func (self *PoloniexClient) OrderBook(stdPair string) (resp exchanges.OrderBookResponse) {
 	panic("implement me")
 
 	exchangePair, err := pairs.ExchangePair(stdPair, exchanges.POLONIEX)
@@ -35,7 +35,7 @@ func (self *Poloniex) OrderBook(stdPair string) (resp exchanges.OrderBookRespons
 	urlQueryArgs["pair"] = exchangePair
 	urlQueryArgs["depth"] = "100"
 
-	clientResponse, err := self.client.Do("GET", "", urlQueryArgs, nil, nil)
+	clientResponse, err := self.apiClient.Do("GET", "", urlQueryArgs, nil, nil)
 
 	var exchangeResponse PoloniexOrderBook
 	err = json.Unmarshal(clientResponse, &exchangeResponse)
@@ -71,11 +71,11 @@ func (self *Poloniex) OrderBook(stdPair string) (resp exchanges.OrderBookRespons
 	return
 }
 
-func (self *Poloniex) Ticker() (resp exchanges.TickerResponse) {
+func (self *PoloniexClient) Ticker() (resp exchanges.TickerResponse) {
 	urlQueryArgs := make(map[string]string)
 	urlQueryArgs["command"] = "returnTicker"
 
-	clientRes, err := self.client.Do("GET", "", urlQueryArgs, nil, nil)
+	clientRes, err := self.apiClient.Do("GET", "", urlQueryArgs, nil, nil)
 
 	if err != nil {
 		log.Error("there was an error getting the ticker", "module", "exchanges", "exchange", "poloniex", "error", err)
@@ -117,10 +117,10 @@ func (self *Poloniex) Ticker() (resp exchanges.TickerResponse) {
 	return
 }
 
-func (self *Poloniex) Balances() (resp exchanges.BalancesResponse) {
+func (self *PoloniexClient) Balances() (resp exchanges.BalancesResponse) {
 	bodyArgs := make(map[string]string)
 	bodyArgs["command"] = "returnCompleteBalances"
-	res, err := self.client.Do("POST", "", nil, bodyArgs, nil)
+	res, err := self.apiClient.Do("POST", "", nil, bodyArgs, nil)
 
 	if err != nil {
 		log.Error("there was an error getting balances", "module", "exchanges", "exchange", "poloniex", "error", err)
@@ -149,7 +149,7 @@ func (self *Poloniex) Balances() (resp exchanges.BalancesResponse) {
 	return
 }
 
-func (self *Poloniex) ChartData(stdPair string, period time.Duration, start, end time.Time) (resp exchanges.ChartDataResponse) {
+func (self *PoloniexClient) ChartData(stdPair string, period time.Duration, start, end time.Time) (resp exchanges.ChartDataResponse) {
 	urlQueryArgs := make(map[string]string)
 	urlQueryArgs["currencyPair"], _ = pairs.ExchangePair(stdPair, "poloniex")
 	urlQueryArgs["period"] = fmt.Sprintf("%d", int(period.Seconds()))
@@ -157,7 +157,7 @@ func (self *Poloniex) ChartData(stdPair string, period time.Duration, start, end
 	urlQueryArgs["end"] = fmt.Sprintf("%d", end.Unix())
 	urlQueryArgs["command"] = "returnChartData"
 
-	res, err := self.client.Do("GET", "", urlQueryArgs, nil, nil)
+	res, err := self.apiClient.Do("GET", "", urlQueryArgs, nil, nil)
 
 	if err != nil {
 		log.Error("there was an error getting chart data", "module", "exchanges", "exchange", "poloniex", "error", err)
@@ -185,7 +185,7 @@ func (self *Poloniex) ChartData(stdPair string, period time.Duration, start, end
 	return
 }
 
-func (self *Poloniex) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
+func (self *PoloniexClient) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
 	body := make(map[string]string)
 	body["currencyPair"] = "all"
 	body["limit"] = "10000"
@@ -193,7 +193,7 @@ func (self *Poloniex) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
 	body["end"] = strconv.FormatInt(time.Now().Unix(), 10)
 	body["command"] = "returnTradeHistory"
 
-	data, err := self.client.Do("POST", "", nil, body, nil)
+	data, err := self.apiClient.Do("POST", "", nil, body, nil)
 
 	if err != nil {
 		log.Error("there was an error getting my trade history", "module", "exchanges", "exchange", "poloniex", "error", err)
@@ -236,13 +236,13 @@ func (self *Poloniex) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
 	return
 }
 
-func (self *Poloniex) DepositsWithdrawals() (resp exchanges.DepositsWithdrawalsResponse) {
+func (self *PoloniexClient) DepositsWithdrawals() (resp exchanges.DepositsWithdrawalsResponse) {
 	body := make(map[string]string)
 	body["start"] = "0"
 	body["end"] = strconv.FormatInt(time.Now().Unix(), 10)
 	body["command"] = "returnDepositsWithdrawals"
 
-	data, err := self.client.Do("POST", "", nil, body, nil)
+	data, err := self.apiClient.Do("POST", "", nil, body, nil)
 
 	if err != nil {
 		resp.Data = nil

@@ -4,7 +4,6 @@ import (
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
 	"tracr-daemon/keys"
-	"tracr-cache"
 )
 
 type TickerProcessor struct {
@@ -20,7 +19,7 @@ func (self *TickerProcessor) Process(input interface{}) {
 	ticker := input.(exchanges.Ticker)
 	log.Debug("processing", "key", self.Key(), "module", "processors", "tickerHighestBid", *ticker.HighestBid)
 
-	tracr_cache.PutTicker(self.Key(), ticker)
+	//tracr_cache.PutTicker(self.Key(), ticker)
 }
 
 func (self *TickerProcessor) Key() string {

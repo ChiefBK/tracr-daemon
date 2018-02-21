@@ -7,9 +7,6 @@ import (
 	"tracr-store"
 	"tracr-daemon/logging"
 	"tracr-daemon/collectors"
-	"tracr-daemon/processors"
-	"tracr-daemon/receivers"
-	"tracr-cache"
 	"tracr-daemon/util"
 )
 
@@ -47,9 +44,8 @@ func initialize(logPath string, cleanDb bool, onOsx bool) (err error) {
 		return
 	}
 
-	processors.Init()
-	receivers.Init()
-	tracr_cache.Init()
+	//processors.Init()
+	//receivers.Init()
 
 	return
 }

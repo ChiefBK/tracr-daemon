@@ -8,10 +8,10 @@ import (
 
 type MyTradeHistoryCollector struct {
 	exchange string
-	client   exchanges.Exchange
+	client   exchanges.ExchangeClient
 }
 
-func NewMyTradeHistoryCollector(exchange string, client exchanges.Exchange) *MyTradeHistoryCollector {
+func NewMyTradeHistoryCollector(exchange string, client exchanges.ExchangeClient) *MyTradeHistoryCollector {
 	return &MyTradeHistoryCollector{exchange, client}
 }
 
@@ -28,7 +28,7 @@ func (self *MyTradeHistoryCollector) Collect() {
 		return
 	}
 
-	data := response.Data
+	//data := response.Data
 
-	sendToProcessor(self.Key(), data)
+	//sendToProcessor(self.Key(), data)
 }

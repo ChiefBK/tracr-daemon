@@ -9,10 +9,10 @@ import (
 type OrderBookCollector struct {
 	exchange string
 	pair string
-	exchangeClient exchanges.Exchange
+	exchangeClient exchanges.ExchangeClient
 }
 
-func NewOrderBookCollector(exchange, pair string, exchangeClient exchanges.Exchange) *OrderBookCollector {
+func NewOrderBookCollector(exchange, pair string, exchangeClient exchanges.ExchangeClient) *OrderBookCollector {
 	return &OrderBookCollector{exchange, pair, exchangeClient}
 }
 
@@ -24,9 +24,9 @@ func (self *OrderBookCollector) Collect() {
 		return
 	}
 
-	orderBook := response.Data
+	//orderBook := response.Data
 
-	sendToProcessor(self.Key(), orderBook)
+	//sendToProcessor(self.Key(), orderBook)
 }
 
 func (self *OrderBookCollector) Key() string {

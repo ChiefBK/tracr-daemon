@@ -10,7 +10,6 @@ import (
 	"os"
 	"sort"
 	"time"
-	"tracr-daemon/channels"
 	log "github.com/inconshreveable/log15"
 	"tracr-daemon/exchanges"
 	"errors"
@@ -64,9 +63,9 @@ func Start() {
 	}
 }
 
-func sendToProcessor(key string, output interface{}) {
-	log.Debug("sending to processor module", "module", "exchangeCollectors", "key", key)
-	collectorOutput := channels.CollectorOutputProcessorInput{output, key}
-
-	channels.CollectorProcessorChan <- collectorOutput
-}
+//func sendToProcessor(key string, output interface{}) {
+//	log.Debug("sending to processor module", "module", "exchangeCollectors", "key", key)
+//	collectorOutput := channels.CollectorOutputProcessorInput{output, key}
+//
+//	channels.CollectorProcessorChan <- collectorOutput
+//}

@@ -5,8 +5,6 @@ import (
 	log "github.com/inconshreveable/log15"
 	"os"
 	"tracr-daemon/collectors"
-	"tracr-daemon/processors"
-	"tracr-daemon/receivers"
 	"flag"
 )
 
@@ -77,72 +75,9 @@ func main() {
 		return
 	}
 
-	//orderBook := streams.ReadOrderBook("poloniex", "USDT_BTC")
-	//ticker := streams.ReadTicker("poloniex", "USDT_BTC")
-
-	//if err != nil {
-	//	log.Warn("There was an error Marshalling orderbook", "module", "main")
-	//}
-
-	//log.Printf("OrderBook: %s", ob)
-	//log.Printf("OrderBook2: %s", orderBook)
-	//log.Printf("ticker: %s", ticker)
-
-	//go command.Start()
-
-	//orderBookSteward := goku_bot.NewOrderBookSteward("USDT_BTC", "poloniex")
-	//tickerSteward := goku_bot.NewTickerSteward()
-	//
-	//if err != nil {
-	//	log.Println(err)
-	//	return
-	//}
-	//
-	//go orderBookSteward.ConnectPoloniexOrderBook("USDT_BTC")
-	//go tickerSteward.ConnectPoloniexTicker()
-	//
-	//log.Printf("Websocket connections established and receiving")
-	//
-	//startGatheringAccountInfo()
-	//
-	//isTradesSynced := <-goku_bot.TradeHistorySynced // make sure my trades have been synced
-	//log.Printf("trade history received: %s", isTradesSynced)
-	//isDepositWithdrawalHistorySynced := <-goku_bot.DepositWithdrawalHistorySynced // make sure my deposit-withdrawal history have been synced
-	//log.Printf("deposit-withdrawal history received: %s", isDepositWithdrawalHistorySynced)
-	//balances := <-goku_bot.PoloniexBalances // make sure balances have received data
-	//log.Printf("Balances received: %s", balances)
-	//ticker := <-goku_bot.TickerUsdtBtc // make sure usdt_btc ticker has received data
-	//log.Printf("ticker received: %s", ticker)
-	//orderBookUsdtBtc := <-goku_bot.OrderBookChannels["USDT_BTC"]
-	//log.Printf("orderBook bids : %s", orderBookUsdtBtc.GetBidsDescending())
-	//log.Printf("orderBook asks : %s", orderBookUsdtBtc.GetAsksAscending())
-	//
-	//log.Printf("Seeing how things go for 3 min")
-	//
-	//tradeSteward, _ := goku_bot.NewTradeStewared()
-	//
-	//netProfit := tradeSteward.CalculateTradeNetProfit("poloniex", "USDT_BTC")
-	//positions := tradeSteward.GetPositions("poloniex", "USDT_BTC")
-	//positionResults := tradeSteward.CalculatePositionNetProfits("poloniex", "USDT_BTC")
-	//
-	//var netUsdSum float64 = 0
-	//for _, result := range positionResults {
-	//	netUsdSum += result.NetUsd
-	//}
-	//
-	//log.Printf("Net USD: %f", netUsdSum)
-
-	//btcBalance := streams.ReadBalance(exchanges.POLONIEX, pairs.BTC_POLONIEX)
-	//log.Info("BTC balance", "module", "main", "balance", btcBalance)
-	//
-	//btcUsdOrderBook := streams.ReadOrderBook(exchanges.POLONIEX, pairs.BTC_USD)
-	//log.Info("orderbook", "module", "main", "value", len(btcUsdOrderBook.Asks))
-
-	//c.Run()
-	//c.AddFunc("0 */1 * * * *", runMonitor)
-	//c := cron.New()
-	//log.Println("Starting Cron job")
-	//runCandles()
+	// TODO - add signal for catching when user wants to terminate process. Add graceful shutdown
+	timer := time.NewTimer(time.Minute * 3)
+	<-timer.C
 }
 
 func start(logPath string, cleanDb bool, onOsx bool) {
@@ -156,12 +91,9 @@ func start(logPath string, cleanDb bool, onOsx bool) {
 	log.Info("Initialization Complete", "module", "main")
 
 	go collectors.Start()
-	go processors.StartProcessingCollectors()
-	go processors.StartProcessingReceivers()
-	go receivers.Start()
-
-	timer := time.NewTimer(time.Minute * 3)
-	<-timer.C
+	//go processors.StartProcessingCollectors()
+	//go processors.StartProcessingReceivers()
+	//go receivers.Start()
 }
 
 func stop() {

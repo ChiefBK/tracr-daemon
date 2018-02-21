@@ -11,10 +11,10 @@ type ChartDataCollector struct {
 	exchange string
 	pair     string
 	interval time.Duration
-	client   exchanges.Exchange
+	client   exchanges.ExchangeClient
 }
 
-func NewChartDataCollector(exchange, pair string, interval time.Duration, client exchanges.Exchange) *ChartDataCollector {
+func NewChartDataCollector(exchange, pair string, interval time.Duration, client exchanges.ExchangeClient) *ChartDataCollector {
 	return &ChartDataCollector{exchange, pair, interval, client}
 }
 
@@ -29,9 +29,8 @@ func (self *ChartDataCollector) Collect() {
 		return
 	}
 
-	data := response.Data
+	//data := response.Data
 
-	sendToProcessor(self.Key(), data)
 }
 
 func (self *ChartDataCollector) Key() string {
