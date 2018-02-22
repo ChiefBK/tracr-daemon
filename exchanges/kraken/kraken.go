@@ -179,8 +179,71 @@ func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start,
 	return
 }
 
-func (*KrakenClient) MyTradeHistory() exchanges.TradeHistoryResponse {
-	panic("implement me")
+func (self *KrakenClient) MyTradeHistory() (resp exchanges.TradeHistoryResponse) {
+	bodyArgs := make(map[string]string)
+	bodyArgs["type"] = "all"
+	response, err := self.apiClient.Do("POST", "/0/private/TradesHistory", nil, bodyArgs, nil)
+
+	if err != nil {
+		log.Error("error getting making request", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "myTradeHistory", "error", err)
+		resp.Err = err
+		return
+	}
+
+	var krakenResponse KrakenResponse
+	krakenResponse.Result = new(KrakenTradeResult)
+
+	err = json.Unmarshal(response, &krakenResponse)
+
+	if err != nil {
+		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "myTradeHistory", "error", err)
+		resp.Err = err
+		return
+	}
+
+	results := *krakenResponse.Result.(*KrakenTradeResult)
+
+	data := make(map[string][]exchanges.Trade)
+
+	for id, exchangeTrade := range results.Trades {
+		date := time.Unix(int64(exchangeTrade.Time), 0)
+		price, _ := strconv.ParseFloat(exchangeTrade.Price, 64)
+		volume, _ := strconv.ParseFloat(exchangeTrade.Vol, 64)
+		totalCost, _ := strconv.ParseFloat(exchangeTrade.Cost, 64)
+		orderId := exchangeTrade.Ordertxid
+		fee, _ := strconv.ParseFloat(exchangeTrade.Fee, 64)
+		type2 := exchangeTrade.Type
+		exchangePair := exchangeTrade.Pair
+
+		stdPair, err := pairs.StandardPair(exchangePair, exchanges.KRAKEN)
+
+		if err != nil {
+			log.Error("error converting exchange pair", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "myTradeHistory", "exchangePair", exchangePair, "error", err)
+			continue
+		}
+
+		trade := exchanges.Trade{
+			Price:     price,
+			Volume:    volume,
+			Date:      date,
+			Fee:       fee,
+			ID:        id,
+			OrderId:   orderId,
+			TotalCost: totalCost,
+			Type:      type2,
+		}
+
+		if _, hasPair := data[stdPair]; !hasPair {
+			data[stdPair] = make([]exchanges.Trade, 0)
+		}
+
+		pairTrades := data[stdPair]
+		pairTrades = append(pairTrades, trade)
+	}
+
+	resp.Data = data
+	resp.Err = nil
+	return
 }
 
 func (*KrakenClient) DepositsWithdrawals() exchanges.DepositsWithdrawalsResponse {

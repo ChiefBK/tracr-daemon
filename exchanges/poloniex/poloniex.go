@@ -218,14 +218,14 @@ func (self *PoloniexClient) MyTradeHistory() (resp exchanges.TradeHistoryRespons
 		var pairTrades []exchanges.Trade
 		for _, trade := range trades {
 			t := exchanges.Trade{
-				ID:      trade.TradeID,
-				Amount:  trade.GetAmount(),
-				Rate:    trade.GetRate(),
-				Date:    trade.GetDate(),
-				Type:    trade.Type,
-				Total:   trade.GetTotal(),
-				Fee:     trade.GetFee(),
-				OrderId: trade.OrderNumber,
+				ID:        trade.TradeID,
+				Volume:    trade.GetAmount(),
+				Price:     trade.GetRate(),
+				Date:      trade.GetDate(),
+				Type:      trade.Type,
+				TotalCost: trade.GetTotal(),
+				Fee:       trade.GetFee(),
+				OrderId:   trade.OrderNumber,
 			}
 			pairTrades = append(pairTrades, t)
 		}
