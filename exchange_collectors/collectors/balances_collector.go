@@ -18,8 +18,6 @@ func (self *BalancesCollector) Collect() {
 
 	response := self.exchangeClient.Balances()
 
-	log.Debug("balances response", "module", "exchangeCollectors", "key", self.Key(), "response", response)
-
 	if response.Err != nil {
 		log.Error("Error collecting", "module", "exchangeCollectors", "key", self.Key(), "error", response.Err)
 		return

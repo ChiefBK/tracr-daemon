@@ -78,7 +78,7 @@ func TestKrakenClient_ChartData(t *testing.T) {
 type StubBalancesClient struct{}
 
 func (self *StubBalancesClient) Do(method, requestUrlPath string, urlArgs, bodyArgs, headerArgs map[string]string) (response []byte, err error) {
-	return []byte(`{"error":[],"result":{"ZUSD":"8776.8606","XXBT":"0.0000011950","XXRP":"13300.00000000","XLTC":"0.0000000800","XETH":"20.0882771400","BCH":"0.0000040100"}}`), nil
+	return []byte(`{"error":[],"result":{"ZUSD":"0.0000","XXBT":"0.0000011950","XXRP":"13300.00000000","XLTC":"0.0000000800","XETH":"30.1605071000","BCH":"0.0000040100"}}`), nil
 }
 
 func TestKrakenClient_Balances(t *testing.T) {

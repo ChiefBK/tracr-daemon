@@ -9,6 +9,8 @@ import (
 	log "github.com/inconshreveable/log15"
 	"strconv"
 	"strings"
+	"fmt"
+	"errors"
 )
 
 const BASE_URL = "https://api.kraken.com"
@@ -20,6 +22,19 @@ type KrakenClient struct {
 func NewKrakenClient(apiKey, apiSecret string) *KrakenClient {
 	client := tracr_client.NewApiClient(apiKey, apiSecret, exchanges.KRAKEN, BASE_URL, BASE_URL, exchanges.KRAKEN_THROTTLE)
 	return &KrakenClient{client}
+}
+
+func handleKrakenErrors(response KrakenResponse) error {
+	if len(response.Error) > 0 {
+		errString := ""
+		for i, err := range response.Error {
+			errString += fmt.Sprintf("(Error %d) - %s ", i, err)
+		}
+
+		return errors.New(errString)
+	}
+
+	return nil
 }
 
 func (self *KrakenClient) Ticker() (resp exchanges.TickerResponse) {
@@ -47,6 +62,14 @@ func (self *KrakenClient) Ticker() (resp exchanges.TickerResponse) {
 
 	if err != nil {
 		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "ticker", "error", err)
+		resp.Err = err
+		return
+	}
+
+	err = handleKrakenErrors(krakenResponse)
+
+	if err != nil {
+		log.Error("kraken responded successfully with errors", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "ticker", "error", err)
 		resp.Err = err
 		return
 	}
@@ -102,6 +125,14 @@ func (self *KrakenClient) Balances() (resp exchanges.BalancesResponse) {
 		return
 	}
 
+	err = handleKrakenErrors(krakenResponse)
+
+	if err != nil {
+		log.Error("kraken responded successfully with errors", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "balances", "error", err)
+		resp.Err = err
+		return
+	}
+
 	results := *krakenResponse.Result.(*map[string]string)
 	data := make(map[string]float64)
 
@@ -144,6 +175,14 @@ func (self *KrakenClient) ChartData(stdPair string, period time.Duration, start,
 
 	if err != nil {
 		log.Error("error un-marshalling exchange response", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "stdPair", stdPair, "error", err)
+		resp.Err = err
+		return
+	}
+
+	err = handleKrakenErrors(krakenResponse)
+
+	if err != nil {
+		log.Error("kraken responded successfully with errors", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "error", err)
 		resp.Err = err
 		return
 	}
@@ -201,6 +240,14 @@ func (self *KrakenClient) MyTradeHistory() (resp exchanges.TradeHistoryResponse)
 		return
 	}
 
+	err = handleKrakenErrors(krakenResponse)
+
+	if err != nil {
+		log.Error("kraken responded successfully with errors", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "myTradeHistory", "error", err)
+		resp.Err = err
+		return
+	}
+
 	results := *krakenResponse.Result.(*KrakenTradeResult)
 
 	data := make(map[string][]exchanges.Trade)
@@ -237,8 +284,7 @@ func (self *KrakenClient) MyTradeHistory() (resp exchanges.TradeHistoryResponse)
 			data[stdPair] = make([]exchanges.Trade, 0)
 		}
 
-		pairTrades := data[stdPair]
-		pairTrades = append(pairTrades, trade)
+		data[stdPair] = append(data[stdPair], trade)
 	}
 
 	resp.Data = data
@@ -263,13 +309,21 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 
 	clientResponse, err := self.apiClient.Do("POST", "/0/public/Depth", nil, bodyArgs, nil)
 
-	var exchangeResponse KrakenResponse
-	exchangeResponse.Result = &KrakenOrderBookResponse{}
+	var krakenResponse KrakenResponse
+	krakenResponse.Result = &KrakenOrderBookResponse{}
 
-	err = json.Unmarshal(clientResponse, &exchangeResponse)
+	err = json.Unmarshal(clientResponse, &krakenResponse)
 
 	if err != nil {
 		log.Error("there was an error un-marshalling the order book", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "orderBook", "error", err)
+		resp.Err = err
+		return
+	}
+
+	err = handleKrakenErrors(krakenResponse)
+
+	if err != nil {
+		log.Error("kraken responded successfully with errors", "module", "exchanges", "exchange", exchanges.KRAKEN, "method", "chartData", "error", err)
 		resp.Err = err
 		return
 	}
@@ -278,7 +332,7 @@ func (self *KrakenClient) OrderBook(stdPair string) (resp exchanges.OrderBookRes
 	asks := make(map[string]float64)
 	bids := make(map[string]float64)
 
-	krakenOrderBookRespPtr := exchangeResponse.Result.(*KrakenOrderBookResponse)
+	krakenOrderBookRespPtr := krakenResponse.Result.(*KrakenOrderBookResponse)
 	krakenOrderBookResp := *krakenOrderBookRespPtr
 
 	for _, ask := range krakenOrderBookResp[krakenPair].Asks {

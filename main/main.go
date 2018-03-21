@@ -4,13 +4,9 @@ import (
 	"time"
 	log "github.com/inconshreveable/log15"
 	"os"
-	"tracr-daemon/collectors"
 	"flag"
-)
-
-var (
-	API_KEY    = os.Getenv("POLONIEX_API_KEY")
-	API_SECRET = os.Getenv("POLONIEX_API_SECRET")
+	"tracr-daemon/exchange_collectors"
+	"tracr-daemon/exchanges"
 )
 
 /*
@@ -90,10 +86,28 @@ func start(logPath string, cleanDb bool, onOsx bool) {
 
 	log.Info("Initialization Complete", "module", "main")
 
-	go collectors.Start()
+	go startCollectors()
 	//go processors.StartProcessingCollectors()
 	//go processors.StartProcessingReceivers()
 	//go receivers.Start()
+}
+
+func startCollectors() {
+	var exchangeCollectors []*exchange_collectors.ExchangeCollector
+
+	//poloniexCollector := exchange_collectors.NewExchangeCollector(exchanges.POLONIEX, 200*time.Millisecond)
+	krakenCollector := exchange_collectors.NewExchangeCollector(exchanges.KRAKEN, 5*time.Second)
+
+	exchangeCollectors = append(exchangeCollectors, krakenCollector)
+
+	for _, ec := range exchangeCollectors {
+		log.Debug("Initialized exchange collector", "module", "exchangeCollectors", "exchange", ec.Exchange)
+	}
+	log.Info("Finished initialization of Collectors module", "module", "exchangeCollectors")
+
+	for _, exchangeCollector := range exchangeCollectors {
+		go exchangeCollector.Start()
+	}
 }
 
 func stop() {

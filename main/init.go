@@ -6,8 +6,8 @@ import (
 	"errors"
 	"tracr-store"
 	"tracr-daemon/logging"
-	"tracr-daemon/collectors"
 	"tracr-daemon/util"
+	"tracr-cache"
 )
 
 func initialize(logPath string, cleanDb bool, onOsx bool) (err error) {
@@ -32,17 +32,30 @@ func initialize(logPath string, cleanDb bool, onOsx bool) (err error) {
 		return
 	}
 
-	if cleanDb {
-		log.Info("Dropping DB")
-		err = store.DropDatabase()
-	}
-
-	logging.Init(logPath)
-	err = collectors.Init()
+	cache, err := tracr_cache.NewCacheClient()
 
 	if err != nil {
 		return
 	}
+
+	if cleanDb {
+		log.Info("Dropping DB")
+		err = store.DropDatabase()
+
+		if err != nil {
+			return
+		}
+
+		log.Info("Clearing cache")
+		err = cache.ClearCache()
+
+		if err != nil {
+			return
+		}
+
+	}
+
+	logging.Init(logPath)
 
 	//processors.Init()
 	//receivers.Init()

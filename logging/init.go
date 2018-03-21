@@ -7,6 +7,47 @@ import (
 	"time"
 )
 
+type Logger struct {
+	module string
+}
+
+func NewLogger(module string) *Logger{
+	return &Logger{
+		module: module,
+	}
+}
+
+func (self *Logger) Debug(message string, args ...interface{}){
+	if len(args) % 2 == 0 {
+		log.Debug(message, "module", self.module, args)
+	} else {
+		log.Debug(message, "module", self.module)
+	}
+}
+
+func (self *Logger) Info(message string, args ...interface{}){
+	if len(args) > 1{
+		log.Info(message, "module", self.module, args)
+	} else {
+		log.Info(message, "module", self.module)
+	}
+}
+
+func (self *Logger) Warn(message string, args ...interface{}){
+	if len(args) > 1{
+		log.Warn(message, "module", self.module, args)
+	} else {
+		log.Warn(message, "module", self.module)
+	}
+}
+
+func (self *Logger) Error(message string, args ...interface{}){
+	if len(args) > 1{
+		log.Error(message, "module", self.module, args)
+	} else {
+		log.Error(message, "module", self.module)
+	}
+}
 
 func Init(logPath string) {
 	var basePath = filepath.Join("/var", "log", "tracr")
